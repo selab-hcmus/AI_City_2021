@@ -4,7 +4,7 @@ This module handles the following task:
 
 ## Module organization
 - `data`: contains necessary annotation json files used for extraction. Can be downloaded at [gdrive](https://drive.google.com/drive/folders/1ksG1-S0l026LNlu3JZIc5ul-e1wM2l1F?usp=sharing)
-- `results`: contains 2 result files of train and test after extraction. Our result is stored at [gdrive](https://drive.google.com/drive/folders/1-UZKNaNnx9YAAki5Ec3k9zlSsmCEcox_?usp=sharing)
+- `results`: contains 2 result files of train and test after extraction. Our results are stored at [gdrive](https://drive.google.com/drive/folders/1-UZKNaNnx9YAAki5Ec3k9zlSsmCEcox_?usp=sharing)
 - `notebook`: contains fundamental steps to run this module.
 
 ## Prepare
