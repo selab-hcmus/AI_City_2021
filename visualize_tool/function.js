@@ -1,4 +1,4 @@
-import result_json from "./results/uptrain_val_8e_refine-1.js";
+import result_json from "./results/result_refine.js";
 import order_json from "./order.js";
 import test_queries from "./test_queries.js"
 

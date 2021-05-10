@@ -5,7 +5,7 @@ This module handles the following tasks:
 ## Module organization 
 - `data`: stores required files to train the model
 - `config`: contains our best configurations
-- `experiemnts`: contains experiment results such as training log, model checkpoints, etc.
+- `experiemnts`: contains experiment results such as training log, model checkpoints, etc. 
 - `results`: stores the output of inference step.
 
 ## Prepare
@@ -20,7 +20,8 @@ The necessary data to train is produced from previous step ( [classifier](../cla
 sh script/PREPARE.sh
 sh script/TRAIN.sh
 ```
-When training from scratch, please change the model checkpoint path in *uptrain step* in `TRAIN.sh`. Currently we hardcode our best model (download from [gdrive](https://drive.google.com/drive/folders/117cxzdS6JWNW3KuJwOrQcoW8Qm91CN-H?usp=sharing))
+When training from scratch, please change the model checkpoint path in *uptrain step* in `TRAIN.sh`. 
+Currently we use our best model (download from [gdrive](https://drive.google.com/drive/folders/117cxzdS6JWNW3KuJwOrQcoW8Qm91CN-H?usp=sharing))
 
 ## Inference
 ```

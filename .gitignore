@@ -6,6 +6,7 @@
 ./*/results/*
 dataset/*
 ./retrieval_model/experiments/*
+visualize_tool/video_mp4
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
