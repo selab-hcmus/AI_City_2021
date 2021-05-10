@@ -8,8 +8,9 @@ import os
 
 TRACKS_DIR = '../dataset/data/test-tracks.json'
 track = json.load(open(TRACKS_DIR))
+save_dir = "./results"
 
-def label_extraction(model, config, track):
+def label_extraction(model, track):
     ans = {}
     split = 10
     for key in tqdm(track):
@@ -19,7 +20,7 @@ def label_extraction(model, config, track):
         boxes = [track[key]['boxes'][i] for i in idx]
         pred = []
         for frame, box in zip(frames, boxes):
-            new_path = os.path.join("/content/test_imgs", frame)
+            new_path = os.path.join("../dataset", frame)
             img = Image.open(new_path)
             x, y, w, h = box
             x_0, y_0, x_1, y_1 = int(x), int(y), int(x+w), int(y+w)
@@ -44,9 +45,10 @@ def split_data(seq, num):
         ans.append(arr[len(arr)//2])
     return ans
 
-
-
-
+def save_result(save_dir, data_json):
+    f = open(save_dir, 'w')
+    json.dump(data_json, f, indent=2)
+    f.close()
 
 if __name__ == "__main__":
     veh_model, col_model = init_model(cfg_veh, cfg_col, load_ckpt=True)
@@ -58,7 +60,11 @@ if __name__ == "__main__":
     col_model.eval()
 
     # predict vehicle label for test track's visual data
-    label_extraction(veh_model, cfg_veh, track)
+    ans_veh = label_extraction(veh_model, track)
+    save_dir_veh = os.path.join(save_dir, "test_vehicle_predict.json")
+    save_result(save_dir_veh, ans_veh)
 
-    # predict vehicle label for test track's visual data
-    label_extraction(col_model, cfg_col, track)
+    # predict color label for test track's visual data
+    col_veh = label_extraction(col_model, track)
+    save_dir_col = os.path.join(save_dir, "test_color_predict.json")
+    save_result(save_dir_col, col_veh)

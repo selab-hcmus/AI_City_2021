@@ -1,3 +1,7 @@
+# ./classifier/data/col_boxes/*
+# ./classifier/data/veh_boxes/*
+# ./classifier/data/*.zip
+# ./classifier/results/*.pt 
 ./*/data/*
 ./*/results/*
 dataset/*

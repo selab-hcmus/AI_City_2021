@@ -1,0 +1,47 @@
+Value for k (default: 5)
+Value for delta (default: 5)
+Value for alpha (default: 0.1)
+68
+c:\Temp\Box\test_track_boxes_ver2\100.txt
+14
+c:\Temp\Box\test_track_boxes_ver2\144.txt
+81
+c:\Temp\Box\test_track_boxes_ver2\184.txt
+114
+c:\Temp\Box\test_track_boxes_ver2\223.txt
+40
+c:\Temp\Box\test_track_boxes_ver2\287.txt
+160
+c:\Temp\Box\test_track_boxes_ver2\3.txt
+615
+c:\Temp\Box\test_track_boxes_ver2\315.txt
+0
+c:\Temp\Box\test_track_boxes_ver2\33.txt
+45
+c:\Temp\Box\test_track_boxes_ver2\336.txt
+124
+c:\Temp\Box\test_track_boxes_ver2\342.txt
+66
+c:\Temp\Box\test_track_boxes_ver2\37.txt
+71
+c:\Temp\Box\test_track_boxes_ver2\373.txt
+88
+c:\Temp\Box\test_track_boxes_ver2\394.txt
+144
+c:\Temp\Box\test_track_boxes_ver2\408.txt
+37
+c:\Temp\Box\test_track_boxes_ver2\423.txt
+39
+c:\Temp\Box\test_track_boxes_ver2\430.txt
+116
+c:\Temp\Box\test_track_boxes_ver2\437.txt
+56
+c:\Temp\Box\test_track_boxes_ver2\449.txt
+183
+c:\Temp\Box\test_track_boxes_ver2\47.txt
+27
+c:\Temp\Box\test_track_boxes_ver2\480.txt
+15
+c:\Temp\Box\test_track_boxes_ver2\484.txt
+4
+c:\Temp\Box\test_track_boxes_ver2\489.txt
