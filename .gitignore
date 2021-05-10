@@ -5,6 +5,7 @@
 ./*/data/*
 ./*/results/*
 dataset/*
+./retrieval_model/experiments/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
