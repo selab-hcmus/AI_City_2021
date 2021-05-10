@@ -1,0 +1,9 @@
+{
+  "predictor": "https://storage.googleapis.com/allennlp-public-models/structured-prediction-srl-bert.2020.12.15.tar.gz",
+  "semantic_key_converter": "./data/convert_semantic_key.json",
+  "vehicle_converter": "./data/convert_vehicle.json",
+  "action_converter": "./data/convert_action.json",
+  "list_vehicle": "./data/vehicle_stat.json",
+  "vehicle_vocab": "./data/vehicle_vocabulary.json",
+  "spelling_correction": "./data/spelling_correction.json"
+}

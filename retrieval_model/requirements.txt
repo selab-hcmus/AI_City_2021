@@ -1,0 +1,17 @@
+tensorboard
+numpy
+transformers # huggingface transformers
+h5py # .h5 files
+tqdm # progressbar
+pyyaml # .yaml files
+gputil # gpu profiler
+psutil # ram profiler
+pydantic # typing extension
+pathspec # git-ignore like patterns
+pytest # unit tests
+pytest-cov # code coverage
+mypy # typing
+pycodestyle # code style check. pycodestyle --max-line-length 120 .
+pylint # linter
+pycocoevalcap # text evaluation # alternative: # pip install git+https://github.com/salaniz/pycocoevalcap
+nltk
