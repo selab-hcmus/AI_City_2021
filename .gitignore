@@ -1,12 +1,13 @@
-# ./classifier/data/col_boxes/*
-# ./classifier/data/veh_boxes/*
-# ./classifier/data/*.zip
-# ./classifier/results/*.pt 
+visualize_tool/video_mp4
+visualize_tool/results/*
+srl_extraction/data/*
+retrieval_model/experiments/*
+srl_handler/results/*
 ./*/data/*
 ./*/results/*
 dataset/*
-./retrieval_model/experiments/*
-visualize_tool/video_mp4
+
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

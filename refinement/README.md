@@ -20,4 +20,4 @@ This module needs previous steps' results:
 cd ./refinement
 python main.py
 ```
-Result will be saved to `refinement/results`
+Final result will be saved to `refinement/results`
