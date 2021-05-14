@@ -1,4 +1,4 @@
-import os, sys, json, pickle, h5py
+import os, json, pickle, h5py
 import os.path as osp 
 import cv2 
 from tqdm import tqdm
@@ -7,8 +7,8 @@ from PIL import Image
 import torch 
 from torch import nn 
 import torchvision
-from torchvision import datasets, models, transforms
-from box_extractor import init_model, preprocess_input
+from box_extractor import init_model
+from utils import preprocess_input, get_feat_from_subject_box
 from config import cfg_veh, cfg_col
 
 ## GLOBAL VARIABLES
@@ -44,33 +44,11 @@ train_track = json.load(open(TRAIN_TRACK_JSON))
 test_track = json.load(open(TEST_TRACK_JSON))
 data_track = {'train': train_track, 'test': test_track}
 
-img_transform = transforms.Compose([
-    transforms.Resize(GLOBAL_SIZE),
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-])
-
-def preprocess(cv_img):
-    tensor_img = img_transform(Image.fromarray(cv_img).convert("RGB"))
-    return tensor_img
-
 veh_model, col_model = init_model(cfg_veh, cfg_col, load_ckpt=True)
 veh_model = veh_model.cuda()
 col_model = col_model.cuda()
 
 print(f'Loaded box extractor successfully')
-
-@torch.no_grad()
-def get_feat_from_subject_box(crop):
-    crop = preprocess_input(Image.fromarray(crop).convert('RGB'))
-    veh_feat = veh_model.extract_feature(crop.unsqueeze(0).cuda())
-    col_feat = col_model.extract_feature(crop.unsqueeze(0).cuda())
-
-    veh_feat = veh_feat.squeeze().cpu()
-    col_feat = col_feat.squeeze().cpu()
-
-    feat = torch.cat((veh_feat, col_feat), axis=0)
-    return feat
 
 @torch.no_grad()
 def extract_feature(data_track, img_dir, split='train'):
@@ -90,13 +68,13 @@ def extract_feature(data_track, img_dir, split='train'):
             cv_img = cv2.imread(img_path)
             img_h, img_w, img_c = cv_img.shape
             cv_img = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-            inp = preprocess(cv_img)
+            inp = preprocess_input(cv_img)
             global_feat = model(inp.unsqueeze(0).cuda()) # [2048]
             
             box_coor = [int(x) for x in box_coor]
             x, y, w, h = box_coor
             crop = cv_img[y:y+h, x:x+w, :]
-            box_feat = get_feat_from_subject_box(crop) # [2*2048] 
+            box_feat = get_feat_from_subject_box(crop, veh_model, col_model) # [2*2048] 
             
             feat = torch.cat((global_feat.squeeze().cpu(), box_feat)) #[6144]
             coor_feat = torch.Tensor([x/img_w, y/img_h, w/img_w, h/img_h]).float()

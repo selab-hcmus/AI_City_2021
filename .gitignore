@@ -6,8 +6,13 @@ srl_handler/results/*
 ./*/data/*
 ./*/results/*
 dataset/*
-
-
+./*/desktop.ini
+./*/*/desktop.ini
+./*/*/*/desktop.ini
+desktop.ini
+classifier/data/*
+classifier/results/*
+object_tracking/ckpts/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

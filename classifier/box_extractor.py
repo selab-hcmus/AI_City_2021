@@ -1,23 +1,15 @@
-import numpy as np 
-import cv2, os, json, sys
+import sys
 sys.path.append('./EfficientNet-PyTorch')
-
+from utils import preprocess_input
 import torch 
 from torch import nn 
-import torchvision
-from torchvision import datasets, models, transforms
+from torchvision import transforms
 
 from efficientnet_pytorch import EfficientNet
 import PIL
 IMAGE_SIZE = (224,224)
 MEAN = [0.485, 0.456, 0.406]
 STD = [0.229, 0.224, 0.225]
-
-val_transform = transforms.Compose([
-    transforms.Resize(IMAGE_SIZE, PIL.Image.BICUBIC),
-    transforms.ToTensor(),
-    transforms.Normalize(MEAN, STD),
-])
 
 class VehicleClassifier(nn.Module):
     def __init__(self, cfg):
@@ -103,8 +95,3 @@ def init_model(cfg_veh, cfg_col, load_ckpt=True):
         col_model.load_state_dict(get_state_dict(col_weight))    
 
     return veh_model, col_model
-    
-def preprocess_input(img):
-    img = img.convert('RGB')
-    img = val_transform(img)
-    return img

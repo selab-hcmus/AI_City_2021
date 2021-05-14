@@ -15,6 +15,7 @@ from torch.optim import lr_scheduler
 import torchvision
 from torchvision import datasets, models, transforms
 from torchvision.datasets import ImageFolder
+import PIL
 
 
 class AverageTracker(object):
@@ -152,3 +153,29 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, num_epochs=
     model.load_state_dict(best_model_wts)
     return model, val_acc_history, train_acc_history
 
+@torch.no_grad()
+def get_feat_from_subject_box(crop, veh_model, col_model):
+    crop = preprocess_input(Image.fromarray(crop).convert('RGB'))
+    veh_feat = veh_model.extract_feature(crop.unsqueeze(0).cuda())
+    col_feat = col_model.extract_feature(crop.unsqueeze(0).cuda())
+
+    veh_feat = veh_feat.squeeze().cpu()
+    col_feat = col_feat.squeeze().cpu()
+
+    feat = torch.cat((veh_feat, col_feat), axis=0)
+    return feat
+
+IMAGE_SIZE = (224,224)
+MEAN = [0.485, 0.456, 0.406]
+STD = [0.229, 0.224, 0.225]
+
+val_transform = transforms.Compose([
+    transforms.Resize(IMAGE_SIZE, PIL.Image.BICUBIC),
+    transforms.ToTensor(),
+    transforms.Normalize(MEAN, STD),
+])
+
+def preprocess_input(img):
+    img = img.convert('RGB')
+    img = val_transform(img)
+    return img
