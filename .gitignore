@@ -13,6 +13,9 @@ desktop.ini
 classifier/data/*
 classifier/results/*
 object_tracking/ckpts/*
+slurm*
+*.sh 
+.vscode 
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

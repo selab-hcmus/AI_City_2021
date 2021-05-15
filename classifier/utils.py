@@ -3,9 +3,7 @@ import os.path as osp
 import pandas as pd 
 from tqdm import tqdm
 from glob import glob
-import seaborn as sns 
 import numpy as np
-import matplotlib.pyplot as plt
 from PIL import Image
 
 import torch
@@ -17,6 +15,21 @@ from torchvision import datasets, models, transforms
 from torchvision.datasets import ImageFolder
 import PIL
 
+### CONSTANT
+IMAGE_SIZE = (224,224)
+MEAN = [0.485, 0.456, 0.406]
+STD = [0.229, 0.224, 0.225]
+
+val_transform = transforms.Compose([
+    transforms.Resize(IMAGE_SIZE, PIL.Image.BICUBIC),
+    transforms.ToTensor(),
+    transforms.Normalize(MEAN, STD),
+])
+
+def preprocess_input(img):
+    img = img.convert('RGB')
+    img = val_transform(img)
+    return img
 
 class AverageTracker(object):
     """Computes and stores the average and current value"""
@@ -165,17 +178,3 @@ def get_feat_from_subject_box(crop, veh_model, col_model):
     feat = torch.cat((veh_feat, col_feat), axis=0)
     return feat
 
-IMAGE_SIZE = (224,224)
-MEAN = [0.485, 0.456, 0.406]
-STD = [0.229, 0.224, 0.225]
-
-val_transform = transforms.Compose([
-    transforms.Resize(IMAGE_SIZE, PIL.Image.BICUBIC),
-    transforms.ToTensor(),
-    transforms.Normalize(MEAN, STD),
-])
-
-def preprocess_input(img):
-    img = img.convert('RGB')
-    img = val_transform(img)
-    return img

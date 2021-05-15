@@ -13,7 +13,7 @@ from config import cfg_veh, cfg_col
 
 ## GLOBAL VARIABLES
 # ROOT_DIR = '/content/AI_CITY_2021/DATA/data_track_5/AIC21_Track5_NL_Retrieval'
-ROOT_DIR = '../dataset'
+ROOT_DIR = '/scratch/ntphat/dataset'
 
 class Identity(nn.Module):
     def __init__(self):
