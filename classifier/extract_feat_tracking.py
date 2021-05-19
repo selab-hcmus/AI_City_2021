@@ -1,4 +1,4 @@
-import json, pickle, os
+import json, os
 import os.path as osp 
 import cv2 
 from tqdm import tqdm
@@ -9,7 +9,6 @@ from config import cfg_veh, cfg_col
 from utils import get_feat_from_subject_box, pickle_save, pickle_load
 
 ## GLOBAL VARIABLES
-
 # ROOT_DIR = '/content/AIC21_Track5_NL_Retrieval'
 # ROOT_DIR = '/scratch/ntphat/dataset'
 ## Use this below code when you have placed the dataset folder inside this project
@@ -26,7 +25,7 @@ train_track = json.load(open(TRAIN_TRACK_JSON))
 test_track = json.load(open(TEST_TRACK_JSON))
 data_track = {'train': train_track, 'test': test_track}
 
-veh_model, col_model = init_model(cfg_veh, cfg_col, load_ckpt=True)
+veh_model, col_model = init_model(cfg_veh, cfg_col, load_ckpt=True, eval=True)
 veh_model = veh_model.cuda()
 col_model = col_model.cuda()
 
@@ -62,9 +61,6 @@ def extract_feature(data_track, data_dir, mode_save_dir: str):
         print(f'Extract {count}th')
         pickle_save(track_feat, track_save_path)
         feat[key_track] = track_feat
-
-        # if count % SAVE_PERIOD == 0 and tmp_path is not None:
-        #     pickle_save(feat, tmp_path)
 
     return feat
 

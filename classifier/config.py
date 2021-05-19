@@ -20,10 +20,12 @@ cfg_col = CONFIG.copy()
 
 cfg_veh.update({
     'NUM_CLASSES': 6,
-    'WEIGHT': './results/veh_classifier.pt'
+    'WEIGHT': './results/veh_classifier.pt',
+    'output_type': 'fraction',
 })
 
 cfg_col.update({
     'NUM_CLASSES': 8,
-    'WEIGHT': './results/col_classifier.pt'
+    'WEIGHT': './results/col_classifier.pt',
+    'output_type': 'fraction',
 })

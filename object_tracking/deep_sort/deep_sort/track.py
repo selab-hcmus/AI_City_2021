@@ -8,9 +8,7 @@ class TrackState:
     the track state is changed to `confirmed`. Tracks that are no longer alive
     are classified as `deleted` to mark them for removal from the set of active
     tracks.
-
     """
-
     Tentative = 1
     Confirmed = 2
     Deleted = 3
