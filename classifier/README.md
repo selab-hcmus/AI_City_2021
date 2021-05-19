@@ -36,3 +36,7 @@ The extracted feature will be saved in `../retrieval_model/data`
 python label_prediction.py
 ```
 The label outputs will be saved in `./results`
+
+
+TODO
+### Instruction for extract feat of tracked object

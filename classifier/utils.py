@@ -178,3 +178,15 @@ def get_feat_from_subject_box(crop, veh_model, col_model):
     feat = torch.cat((veh_feat, col_feat), axis=0)
     return feat
 
+def pickle_save(data, save_path, verbose=True):
+    with open(save_path, 'wb') as f:
+        pickle.dump(data, f)
+
+    if verbose:
+        print(f'save result to {save_path}')
+
+def pickle_load(save_path):
+    with open(save_path, 'rb') as f:
+        data = pickle.load(f)
+    print(f'load result from {save_path}')
+    return data
