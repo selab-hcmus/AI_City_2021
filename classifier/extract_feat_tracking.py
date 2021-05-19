@@ -12,8 +12,8 @@ from utils import get_feat_from_subject_box
 
 ## Use this below code when you have placed the dataset folder inside this project
 # ROOT_DIR = '/content/AIC21_Track5_NL_Retrieval'
-# ROOT_DIR = '/scratch/ntphat/dataset'
-ROOT_DIR = '../dataset'
+ROOT_DIR = '/scratch/ntphat/dataset'
+# ROOT_DIR = '../dataset'
 
 # SAVE_DIR = '/scratch/ntphat/results'
 SAVE_DIR = './results'
@@ -47,14 +47,10 @@ def pickle_load(save_path):
 @torch.no_grad()
 def extract_feature(data_track, data_dir, mode_save_dir: str):
     feat = {}
-
-    # if (tmp_path is not None) and osp.isfile(tmp_path):
-    #     feat = pickle_load(tmp_path)
-    #     os.remove(tmp_path)
-    #     pass
     
-    # count = 1
-    for key_track in tqdm(data_track):
+    count = 1
+    for key_track in data_track:
+        count += 1
         track_save_path = osp.join(mode_save_dir, f'{key_track}.pkl')
         if osp.isfile(track_save_path):
             continue 
@@ -76,9 +72,9 @@ def extract_feature(data_track, data_dir, mode_save_dir: str):
                 frame_feat.append(box_feat)
             track_feat[frame_path] = frame_feat
         
+        print(f'Extract {count}th')
         pickle_save(track_feat, track_save_path)
         feat[key_track] = track_feat
-        # count += 1
 
         # if count % SAVE_PERIOD == 0 and tmp_path is not None:
         #     pickle_save(feat, tmp_path)
@@ -89,10 +85,8 @@ if __name__ == '__main__':
     for mode in ["train", "test"]:
         print(f"Extract in {mode} data")
         save_path = osp.join(SAVE_DIR, f'{mode}_feat.pkl')
-        mode_save_dir = osp.join(SAVE_DIR, mode)
+        mode_save_dir = osp.join(SAVE_DIR, f'{mode}_feat')
         os.makedirs(mode_save_dir, exist_ok=True)
 
-        tmp_path = osp.join(SAVE_DIR, f'{mode}_tmp_feat.pkl')
         feat = extract_feature(data_track[mode], ROOT_DIR, mode_save_dir)
-        
         pickle_save(feat, save_path)
