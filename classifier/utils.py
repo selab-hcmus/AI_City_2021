@@ -185,8 +185,10 @@ def pickle_save(data, save_path, verbose=True):
     if verbose:
         print(f'save result to {save_path}')
 
-def pickle_load(save_path):
+def pickle_load(save_path, verbose=False):
     with open(save_path, 'rb') as f:
         data = pickle.load(f)
-    print(f'load result from {save_path}')
+    
+    if verbose:
+        print(f'load result from {save_path}')
     return data
