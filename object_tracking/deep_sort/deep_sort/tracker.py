@@ -37,7 +37,7 @@ class Tracker:
 
     """
 
-    def __init__(self, metric, max_iou_distance=0.7, max_age=40, n_init=1):
+    def __init__(self, metric, max_iou_distance=0.7, max_age=40, n_init=0):
         self.metric = metric
         self.max_iou_distance = max_iou_distance
         self.max_age = max_age
@@ -79,9 +79,6 @@ class Tracker:
             self._initiate_track(detections[detection_idx])
             
         self.tracks = [t for t in self.tracks if not t.is_deleted()]
-
-
-
 
         # Update distance metric.
         active_targets = [t.track_id for t in self.tracks if t.is_confirmed()]

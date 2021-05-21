@@ -65,7 +65,8 @@ def extract_feature(data_track, data_dir, mode_save_dir: str):
     return feat
 
 if __name__ == '__main__':
-    for mode in ["train", "test"]:
+    # for mode in ["train", "test"]:
+    for mode in ["test"]:
         print(f"Extract in {mode} data")
         save_path = osp.join(SAVE_DIR, f'{mode}_feat.pkl')
         mode_save_dir = osp.join(SAVE_DIR, f'{mode}_feat')

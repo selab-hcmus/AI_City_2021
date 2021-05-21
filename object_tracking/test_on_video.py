@@ -100,9 +100,12 @@ def scan_data(track_keys, gt_dict):
     pass
 
 def tracking(config):
+    mode_json_dir = SAVE_JSON_DIR + f"_{config['mode']}"
+    os.makedirs(mode_json_dir, exist_ok=True)
+    
     gt_dict = get_dict_track(config["track_dir"])
     track_keys = listdir(config["feat_dir"])
-    print(f'>> Run DeepSort on {config["mode"]} mode')
+    print(f'>> Run DeepSort on {config["mode"]} mode, save result to {mode_json_dir}')
 
     # track_keys = [
     #     "189bd009-a5db-4103-9edf-754126b34a42.pkl"
@@ -188,14 +191,18 @@ def tracking(config):
         if config["save_video"]:
             out.release()
         
-        save_json_path = os.path.join(SAVE_JSON_DIR, f'{track_key}.pkl')
+
+        save_json_path = os.path.join(mode_json_dir, f'{track_key}.pkl')
         with open(save_json_path, 'wb') as handle:
             pickle.dump(ans, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-        tracked_count += 1
-        if tracked_count > 5:
-            print("Complete tracking")
-            break
+        # if tracked_count == 0:
+        #     print(ans)
+
+        # tracked_count += 1
+        # if tracked_count > 2:
+        #     print("Complete tracking")
+        #     break
     
     pass
 
@@ -222,18 +229,18 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
     config = {
-        "train": {
-            "track_dir": TRAIN_TRACK_DIR,
-            "feat_dir": TRAIN_FEAT_DIR,
-            "save_video": args.save_video,
-            "mode": "train"
-        },
-        # "test": {
-        #     "track_dir": TEST_TRACK_DIR,
-        #     "feat_dir": TEST_FEAT_DIR,
+        # "train": {
+        #     "track_dir": TRAIN_TRACK_DIR,
+        #     "feat_dir": TRAIN_FEAT_DIR,
         #     "save_video": args.save_video,
-        #     "mode": "test"
+        #     "mode": "train"
         # },
+        "test": {
+            "track_dir": TEST_TRACK_DIR,
+            "feat_dir": TEST_FEAT_DIR,
+            "save_video": args.save_video,
+            "mode": "test"
+        },
     }
     for mode in config:
         tracking(config[mode])
