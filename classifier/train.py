@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import PIL
 from PIL import Image
-
+import datetime
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -44,7 +44,7 @@ def train_model_type(model, cfg, csv_path: str, json_path: str, box_dir: str):
 
     train_dataloader = DataLoader(train_dataset, batch_size=cfg['train']['batch_size'], shuffle=True, num_workers=2)
     val_dataloader = DataLoader(val_dataset, batch_size=cfg['val']['batch_size'], shuffle=False, num_workers=2)
-
+    
     # test 
     print(f"train dataset: {len(train_dataset)}")
     print(f"val dataset: {len(val_dataset)}")
@@ -60,11 +60,19 @@ def train_model_type(model, cfg, csv_path: str, json_path: str, box_dir: str):
     dataloaders = {}
     dataloaders['train'] = train_dataloader
     dataloaders['val'] = val_dataloader
+
+    save_path = osp.join(cfg['save_path'], cfg['date'], cfg['type'])
+    os.makedirs(save_path, exist_ok=True)
+    print("Created save directory")
+
+    df_train.to_csv(osp.join(save_path, "train_df.csv"), index = False)
+    df_val.to_csv(osp.join(save_path, "val_df.csv"), index = False)
+
     model, val_acc, train_acc = train_model(
         model, dataloaders, 
         criterion, optimizer, lr_scheduler, 
         num_epochs=cfg['train']['num_epochs'], 
-        save_path=cfg['WEIGHT']
+        save_path=osp.join(save_path)
     )
     pass
 
@@ -81,7 +89,7 @@ def train_color():
 
 def main():
     train_vehicle()
-    train_color()
+    # train_color()
     pass
 
 if __name__ == '__main__':

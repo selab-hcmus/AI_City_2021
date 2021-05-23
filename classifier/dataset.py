@@ -23,11 +23,12 @@ from sklearn.model_selection import StratifiedKFold
 from efficientnet_pytorch import EfficientNet
 from config import CONFIG
 
-VEH_TRAIN_CSV = '/content/SOURCE/extract_object/data/VEHICLE/train_fraction.csv'
+VEH_TRAIN_CSV = '../srl_handler/results/veh_train_fraction_new_edited22May.csv'
+VEH_GROUP_JSON = '../srl_handler/data/vehicle_group_v1.json'
+VEH_BOX_DIR = './data/veh_boxes'
+
 COL_TRAIN_CSV = '/content/SOURCE/extract_object/data/COLOR/train_fraction.csv'
-VEH_GROUP_JSON = '/content/SOURCE/extract_object/data/VEHICLE/vehicle_group_v1.json'
 COL_GROUP_JSON = '/content/SOURCE/extract_object/data/COLOR/color_group_v1.json'
-VEH_BOX_DIR = '/content/TMP/classifier/data/veh_boxes'
 COL_BOX_DIR = '/content/TMP/classifier/data/col_boxes'
 
 n_splits = 5
@@ -89,18 +90,28 @@ class VehicleDataset(Dataset):
 def get_dataset(csv_path: str, group_json: str, box_data_dir):
     def replace_box_dir(cur_dir: str):
         if box_data_dir == VEH_BOX_DIR:
-            cur_dir = cur_dir.replace('/home/ntphat/projects/aic21/aic2021/results/veh_class_2/train', box_data_dir)
+            list_dir = ['/home/ntphat/projects/aic21/aic2021/results/veh_class_2/train',
+                        '/Users/ntphat/Documents/THESIS/SOURCE/aic2021/results/veh_class/train'
+                        ]
+            for item in list_dir:
+                if item in cur_dir:
+                    cur_dir = cur_dir.replace(item, box_data_dir)
+                    break
         else:
             cur_dir = cur_dir.replace('/home/ntphat/projects/aic21/aic2021/results/col_class/train', box_data_dir)
-            pass
-        
+            pass     
         return cur_dir 
 
     df_full = pd.read_csv(csv_path)
     df_full['paths'] = df_full['paths'].apply(replace_box_dir)
-    df_filtered = df_full.drop_duplicates(subset='query_id', keep="first")
-    df_filtered.head()
-    
+    print("Replaced box dir successfully")
+
+    if box_data_dir == VEH_BOX_DIR:
+        df_filtered = df_full[:9992].drop_duplicates(subset='query_id', keep="first")
+    else:
+        df_filtered = df_full.drop_duplicates(subset='query_id', keep="first")
+    print("Dropped duplicated rows")
+
     veh_group = json.load(open(group_json, 'r'))
     id_map = {} # {'group-1': 0}
     for k in veh_group.keys():
@@ -115,9 +126,12 @@ def get_dataset(csv_path: str, group_json: str, box_data_dir):
             veh_map[veh] = i 
 
     filtered_labels = df_filtered['labels']
+
+
     full_train_ids = []
     full_val_ids = []
     count = 1
+    n_get = 1
     for train_ids, val_ids in skf.split(df_filtered, filtered_labels):
         if count > n_get:
             break
@@ -125,8 +139,32 @@ def get_dataset(csv_path: str, group_json: str, box_data_dir):
             full_train_ids.extend(list(range(val*4, (val+1)*4)))
         for val in val_ids:
             full_val_ids.extend(list(range(val*4, (val+1)*4)))
-        df_train, df_val = df_full.iloc[full_train_ids], df_full.iloc[full_val_ids]
         count += 1
 
+    if box_data_dir == VEH_BOX_DIR:
+        count = 1
+        truck_label_id = pd.read_csv("../srl_handler/results/truck_label_group.csv")
+        label = truck_label_id["label"]
+
+        final_train_ids_truck = []
+        final_val_ids_truck = []
+
+        for train_indices, val_indices in skf.split(truck_label_id, label):
+            if count > n_get:
+                break
+            for id in train_indices:
+                list_ids_of_this_id = list(range(truck_label_id.iloc[id]["id"],
+                                                truck_label_id.iloc[id]["id"] + truck_label_id.iloc[id]["num_val"]))
+                final_train_ids_truck.extend(list_ids_of_this_id)
+            for id in val_indices:
+                list_ids_of_this_id = list(range(truck_label_id.iloc[id]["id"],
+                                                truck_label_id.iloc[id]["id"] + truck_label_id.iloc[id]["num_val"]))
+                final_val_ids_truck.extend(list_ids_of_this_id)
+            count += 1
+        
+        full_train_ids.extend(final_train_ids_truck)
+        full_val_ids.extend(final_val_ids_truck)
+    print(len(full_train_ids), len(full_val_ids))
+    df_train, df_val = df_full.iloc[full_train_ids], df_full.iloc[full_val_ids]
     return df_train, df_val
     

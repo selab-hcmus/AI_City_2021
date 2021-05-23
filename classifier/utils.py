@@ -147,7 +147,8 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, num_epochs=
                     best_loss = epoch_loss
                     best_model_wts = copy.deepcopy(model.state_dict())
                     if save_path is not None:
-                        torch.save(model.state_dict(), save_path)
+                        save_model_path = osp.join(save_path, "best_model.pt")
+                        torch.save(model.state_dict(), save_model_path)
                         print(f"save best model at {epoch}")
                     else:
                         step_count += 1
