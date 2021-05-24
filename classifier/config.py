@@ -1,3 +1,7 @@
+import datetime
+import os
+import os.path as osp 
+
 CONFIG = {
     'MODEL': 'efficientnet-b5',
     'NUM_CLASSES': 0,
@@ -13,19 +17,26 @@ CONFIG = {
     },
     'val':{
         'batch_size': 8,
-    }
+    },
+    'save_path': "./results/classifier"
 }
 cfg_veh = CONFIG.copy()
 cfg_col = CONFIG.copy()
 
+date ="May23"
+
 cfg_veh.update({
     'NUM_CLASSES': 6,
-    'WEIGHT': './results/veh_classifier.pt',
+    'WEIGHT': "./results/veh_classifier.pt",
+    "date": date,
+    "type": "vehicle",
     'output_type': 'fraction',
 })
 
 cfg_col.update({
     'NUM_CLASSES': 8,
-    'WEIGHT': './results/col_classifier.pt',
+    'WEIGHT': "./results/col_classifier.pt",
+    "date": date,
+    "type": "color",
     'output_type': 'fraction',
 })
