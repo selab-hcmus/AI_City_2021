@@ -61,9 +61,12 @@ class ColorClassifier(BoxClassifier):
         super().__init__(cfg)
 
 def get_state_dict(weight_path):
+
     state_dict = torch.load(weight_path)
-    state_dict.pop("feature_extractor.0._fc.weight")
-    state_dict.pop("feature_extractor.0._fc.bias")
+    if state_dict.get("feature_extractor.0._fc.weight") is not None:
+        state_dict.pop("feature_extractor.0._fc.weight")
+    if state_dict.get("feature_extractor.0._fc.bias") is not None:
+        state_dict.pop("feature_extractor.0._fc.bias")
     return state_dict
 
 

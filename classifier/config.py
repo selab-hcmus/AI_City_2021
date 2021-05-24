@@ -18,7 +18,7 @@ CONFIG = {
     'val':{
         'batch_size': 8,
     },
-    'save_path': "./results/classifier"
+    'save_path': "./results/classifier",
 }
 cfg_veh = CONFIG.copy()
 cfg_col = CONFIG.copy()
@@ -27,10 +27,18 @@ date ="May23"
 
 cfg_veh.update({
     'NUM_CLASSES': 6,
-    'WEIGHT': "./results/veh_classifier.pt",
+    'WEIGHT': f"./results/classifier/{date}/vehicle/best_model.pt",
     "date": date,
     "type": "vehicle",
-    'output_type': 'fraction',
+    'output_type': 'one_hot',
+    'class_map': {
+        0: 'sedan',
+        1: 'suv',
+        2: 'van',
+        3: 'jeep',
+        4: 'pickup',
+        5: 'bus-truck',
+    },
 })
 
 cfg_col.update({
@@ -38,5 +46,15 @@ cfg_col.update({
     'WEIGHT': "./results/col_classifier.pt",
     "date": date,
     "type": "color",
-    'output_type': 'fraction',
+    'output_type': 'one_hot',
+    'class_map': {
+        0: 'gray',
+        1: 'gold',
+        2: 'red',
+        3: 'blue',
+        4: 'black',
+        5: 'purple',
+        6: 'green',
+        7: 'white',
+    }
 })
