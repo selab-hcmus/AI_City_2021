@@ -13,11 +13,11 @@ data_dir = {
     'train_save': osp.join(SAVE_DIR, 'annotate_time_train'),
     'test_save': osp.join(SAVE_DIR, 'annotate_time_test')
 }
-os.makedirs(data_dir['train_save'], exist_ok=True)
-os.makedirs(data_dir['test_save'], exist_ok=True)
+# os.makedirs(data_dir['train_save'], exist_ok=True)
+# os.makedirs(data_dir['test_save'], exist_ok=True)
 
 
-def convert_video_track(video_data, save_path: str):
+def convert_video_track(video_data, save_path: str=None):
     res = {}
     list_frames = list(video_data.keys())
     n_frames = len(list_frames)
@@ -48,9 +48,11 @@ def convert_video_track(video_data, save_path: str):
     res['n_tracks'] = len(list(tracks_map.keys()))
     res['track_map'] = tracks_map
 
-    with open(save_path, 'w') as f:
-        json.dump(res, f, indent=2)
-    pass 
+    if save_path:
+        with open(save_path, 'w') as f:
+            json.dump(res, f, indent=2)
+
+    return res 
 
 def convert(mode):
     for filename in tqdm(os.listdir(data_dir[f'{mode}_input'])):
@@ -62,7 +64,7 @@ def convert(mode):
         pass
     pass
 
-if __name__ == '__main__':
-    convert(mode='train')
-    convert(mode='test')
-    pass
+# if __name__ == '__main__':
+#     convert(mode='train')
+#     convert(mode='test')
+#     pass

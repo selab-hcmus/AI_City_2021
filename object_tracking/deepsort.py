@@ -1,12 +1,9 @@
-from deep_sort.deep_sort import nn_matching
-from deep_sort.deep_sort.tracker import Tracker 
-from deep_sort.application_util import preprocessing as prep
-from deep_sort.application_util import visualization
-from deep_sort.deep_sort.detection import Detection
+from deep_sort import nn_matching
+from deep_sort.tracker import Tracker 
+import deep_sort.preprocessing as prep
+from deep_sort.detection import Detection
 
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.stats import multivariate_normal
 
 
 class deepsort_rbc():

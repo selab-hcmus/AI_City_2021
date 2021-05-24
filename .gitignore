@@ -1,11 +1,14 @@
 # Common
 ./*/data/*
 ./*/results/*
-dataset/*
 ./*/desktop.ini
 ./*/*/desktop.ini
 ./*/*/*/desktop.ini
 desktop.ini
+
+# dataset
+dataset/*
+!dataset/data_manager.py
 
 # SRL + retrieval model
 srl_extraction/data/*

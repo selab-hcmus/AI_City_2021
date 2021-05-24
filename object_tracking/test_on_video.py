@@ -11,15 +11,21 @@ import argparse
 import warnings
 warnings.filterwarnings("ignore")
 
-from deep_sort.deep_sort.iou_matching import iou
+from deep_sort.iou_matching import iou
+from dataset.data_manager import test_track_map, train_track_map
+from utils import(
+    get_gt_from_idx, get_dict_track, get_img_name, print_fail_dict,
+)
+from tools import (
+    convert_video_track, visualize
+)
 
-TRAIN_TRACK_DIR = "../classifier/data/Centernet2_train_veh_boxes.json"
-TEST_TRACK_DIR = "../classifier/data/Centernet2_test_veh_boxes.json"
+TRAIN_TRACK_DIR = "../classifier/data/Centernet2_train_veh_order.json"
+TEST_TRACK_DIR = "../classifier/data/Centernet2_test_veh_order.json"
 
 # ROOT_DIR = '/content/drive/MyDrive/THESIS/AI_CITY_2021/DATA/data_track_5/AIC21_Track5_NL_Retrieval'
 # Use this below code when you have placed the dataset folder inside this project
 ROOT_DIR = '../dataset'
-
 TRAIN_FEAT_DIR = "../classifier/results/train_feat_tracking"
 TEST_FEAT_DIR = "../classifier/results/test_feat_tracking"
 
@@ -28,80 +34,25 @@ SAVE_VISUALIZE_DIR = './results/video'
 os.makedirs(SAVE_JSON_DIR, exist_ok=True)
 os.makedirs(SAVE_VISUALIZE_DIR, exist_ok=True)
 
+NUM_TO_EXP = 5
+ID_MAP = {'train': train_track_map, 'test': test_track_map}
 
-def get_gt_from_idx(idx_image, gt_dict):
-    frame_info = gt_dict[idx_image]
-    key = list(frame_info.keys())[0]
-    l = min(50, len(frame_info[key]))
-
-    detections = []
-    out_scores = []
+def get_closest_box(list_boxes, target_box):
+    new_list_boxes = [item.to_tlbr() for item in list_boxes]
     
-    for i in range(l):
-        x_0, y_0, x_1, y_1 = frame_info[key][i]
-        x_0, y_0, x_1, y_1 = int(x_0), int(y_0), int(x_1), int(y_1)
+    target_box = np.array(target_box)
+    candidates = np.array(new_list_boxes)
 
-        w = x_1 - x_0
-        h = y_1 - y_0
+    target_box[2:] -= target_box[:2]
+    candidates[:, 2:] -= candidates[:, :2]
+    
+    scores = iou(target_box, candidates)
+    best_id = np.argmax(scores)
 
-        detections.append([x_0,y_0,w,h])
-        out_scores.append(1)
-    return detections, out_scores
+    return new_list_boxes[best_id]
 
-def get_dict_track(filename):
-    return json.load(open(filename))
-
-def get_img_name(img_dict):
-    ans = []
-    l = len(img_dict)
-    for i in range(l):
-        name = list(img_dict[i].keys())[0]
-        ans.append(name)
-    return ans
-
-def print_fail_dict(data, mode='VEHICLE'):
-    print(f'{mode} fail features')
-    for track_id in data.keys():
-        print(f'{track_id}: {len(data[track_id])}')
-    pass
-
-def scan_data(track_keys, gt_dict):
-    # Check extracted features (exist or not)
-    fail_col, fail_veh = {}, {}
-
-    for track_key in tqdm(track_keys):
-        track_key = os.path.splitext(track_key)[0]
-        
-        fail_col[track_key], fail_veh[track_key] = [], []
-        img_dict = gt_dict[track_key]
-        img_names = get_img_name(img_dict)
-        
-        veh_path = os.path.join(VEH_DIR, f"{track_key}.pickle")
-        with open(veh_path, 'rb') as handle:
-            veh_features = pickle.load(handle)[track_key]
-        
-        color_path = os.path.join(COLOR_DIR, f'{track_key}.pickle')
-        with open(color_path, 'rb') as handle:
-            col_features = pickle.load(handle)[track_key]
-        
-        for img_name in img_names:
-            img_col_feat, img_veh_feat = col_features.get(img_name), veh_features.get(img_name)
-            if img_col_feat is None:
-                fail_col[track_key].append(img_name)
-            if img_veh_feat is None:
-                fail_veh[track_key].append(img_name)
-
-    col_fail_save_path = osp.join(SAVE_JSON_DIR, 'fail_col_feats.json')
-    veh_fail_save_path = osp.join(SAVE_JSON_DIR, 'fail_veh_feats.json')
-    json_dump(fail_col, col_fail_save_path)
-    json_dump(fail_veh, veh_fail_save_path)
-    print_fail_dict(fail_col)
-    print_fail_dict(fail_veh)
-    pass
-
-def tracking(config):
-    mode_json_dir = SAVE_JSON_DIR + f"_{config['mode']}"
-    os.makedirs(mode_json_dir, exist_ok=True)
+def tracking(config, json_save_dir: str, vis_save_dir: str, verbose=True):
+    mode_json_dir = json_save_dir
     
     gt_dict = get_dict_track(config["track_dir"])
     track_keys = listdir(config["feat_dir"])
@@ -112,12 +63,17 @@ def tracking(config):
     # ]
     
     tracked_count = 0
-    for track_key in track_keys:
+    for track_key in track_keys[:NUM_TO_EXP]:
         track_key = os.path.splitext(track_key)[0]
+        # track_order = ID_MAP[mode][track_key]
+        track_order = track_key
+
+        if verbose:
+            print(f'tracking order {track_order}')
         img_dict = gt_dict[track_key]
         img_names = get_img_name(img_dict)
         
-        feat_path = os.path.join(config["feat_dir"], f"{track_key}.pkl")
+        feat_path = os.path.join(config["feat_dir"], f"{track_order}.pkl")
         with open(feat_path, 'rb') as handle:
             frame_feat = pickle.load(handle)
 
@@ -128,7 +84,7 @@ def tracking(config):
 
         if config["save_video"]:
             fourcc = cv2.VideoWriter_fourcc(*'XVID')
-            save_visualize_path = os.path.join(SAVE_VISUALIZE_DIR, f'{track_key}.avi')
+            save_visualize_path = os.path.join(vis_save_dir, f'{track_order}.avi')
             # out = cv2.VideoWriter(save_visualize_path,fourcc, 2, (1920,1080))
             out = None
 
@@ -191,38 +147,16 @@ def tracking(config):
         if config["save_video"]:
             out.release()
         
+        save_json_path = os.path.join(mode_json_dir, f'{track_order}.json')
+        reformat_res = convert_video_track(ans, save_json_path)
 
-        save_json_path = os.path.join(mode_json_dir, f'{track_key}.pkl')
-        with open(save_json_path, 'wb') as handle:
-            pickle.dump(ans, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-        # if tracked_count == 0:
-        #     print(ans)
-
-        # tracked_count += 1
-        # if tracked_count > 2:
-        #     print("Complete tracking")
-        #     break
-    
     pass
 
-def get_closest_box(list_boxes, target_box):
-    new_list_boxes = [item.to_tlbr() for item in list_boxes]
-    
-    target_box = np.array(target_box)
-    candidates = np.array(new_list_boxes)
-
-    target_box[2:] -= target_box[:2]
-    candidates[:, 2:] -= candidates[:, :2]
-    
-    scores = iou(target_box, candidates)
-    best_id = np.argmax(scores)
-
-    return new_list_boxes[best_id]
 
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--save_video", action="store_true", help="Save video or not")
+    parser.add_argument("--exp_id", type=str, default='v1')
     args = parser.parse_args()
     return args
 
@@ -242,7 +176,16 @@ if __name__ == '__main__':
             "mode": "test"
         },
     }
+    SAVE_DIR = '/home/ntphat/projects/AI_City_2021/object_tracking/results'
+    exp_save_dir = osp.join(SAVE_DIR, f'Exp_{args.exp_id}')
+    os.makedirs(exp_save_dir, exist_ok=True)
+    json_save_dir = osp.join(exp_save_dir, 'json')
+    vid_save_dir = osp.join(exp_save_dir, 'video')
+    os.makedirs(json_save_dir, exist_ok=True)
+    os.makedirs(vid_save_dir, exist_ok=True)
+
     for mode in config:
-        tracking(config[mode])
+        print(f'Run on mode {mode}')
+        tracking(config[mode], json_save_dir, vid_save_dir)
 
 
