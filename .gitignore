@@ -1,8 +1,4 @@
-visualize_tool/video_mp4
-visualize_tool/results/*
-srl_extraction/data/*
-retrieval_model/experiments/*
-srl_handler/results/*
+# Common
 ./*/data/*
 ./*/results/*
 dataset/*
@@ -10,11 +6,27 @@ dataset/*
 ./*/*/desktop.ini
 ./*/*/*/desktop.ini
 desktop.ini
+
+# SRL + retrieval model
+srl_extraction/data/*
+srl_handler/results/*
+retrieval_model/experiments/*
+
+# Visualize tool
+visualize_tool/video_mp4
+visualize_tool/results/*
+
+# Classifier
 classifier/data/*
 classifier/results/*
+
+# Object tracking
 object_tracking/ckpts/*
 object_tracking/data/*
 object_tracking/results/*
+
+# Relation graph
+relation_graph/*.avi
 
 slurm*
 *.sh 

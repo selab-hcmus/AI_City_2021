@@ -65,8 +65,7 @@ class Tracker:
 
         """
         # Run matching cascade.
-        matches, unmatched_tracks, unmatched_detections = \
-            self._match(detections)
+        matches, unmatched_tracks, unmatched_detections = self._match(detections)
 
         # Update track set.
         for track_idx, detection_idx in matches:
@@ -144,8 +143,6 @@ class Tracker:
     def _initiate_track(self, detection):
         mean, covariance = self.kf.initiate(detection.to_xyah())
         self.tracks.append(Track(
-            mean, covariance, self._next_id, self.n_init, self.max_age,
-            detection.feature))
-        #print(detection.feature)
-        #print(detection.feature.shape)
+            mean, covariance, self._next_id, self.n_init, self.max_age, detection.feature))
+
         self._next_id += 1

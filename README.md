@@ -4,6 +4,10 @@ CVPR AI City Challenge 2021 (HCMUS Team)
 This is the code for our work at AI City Challenge, CVPR 2021.
 ![system overview](assets/system_overview.png)
 
+## In progress
+- [ ] Tracking Module
+- [ ] Relation Module
+
 
 ## Project organization
 Our system contains 4 main modules: 

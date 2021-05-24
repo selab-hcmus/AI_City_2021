@@ -1,6 +1,0 @@
-C:\Users\tmtri\source\repos\ConsoleApp31\ConsoleApp31\bin\Release\ConsoleApp31.exe.config
-C:\Users\tmtri\source\repos\ConsoleApp31\ConsoleApp31\bin\Release\ConsoleApp31.exe
-C:\Users\tmtri\source\repos\ConsoleApp31\ConsoleApp31\bin\Release\ConsoleApp31.pdb
-C:\Users\tmtri\source\repos\ConsoleApp31\ConsoleApp31\obj\Release\ConsoleApp31.exe
-C:\Users\tmtri\source\repos\ConsoleApp31\ConsoleApp31\obj\Release\ConsoleApp31.pdb
-C:\Users\tmtri\source\repos\ConsoleApp31\ConsoleApp31\obj\Release\ConsoleApp31.csprojAssemblyReference.cache

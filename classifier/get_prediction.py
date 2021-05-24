@@ -14,23 +14,37 @@ from box_extractor import init_model
 from config import cfg_veh, cfg_col
 from utils import get_feat_from_subject_box, pickle_save, pickle_load
 
-veh_model, col_model = init_model(cfg_veh, cfg_col, load_ckpt=True, eval=True)
-veh_model = veh_model.cuda()
-col_model = col_model.cuda()
-
+# veh_model, col_model = init_model(cfg_veh, cfg_col, load_ckpt=True, eval=True)
+# veh_model = veh_model.cuda()
+# col_model = col_model.cuda()
 
 def add_label(track_data):
     for track_id in track_data.keys():
+        track_list = track_data[track_id]
+        if len(track_list) == 0:
+            continue
         
+        data = track_list[0]
+        print(type(data['feature']))
+        print(data['feature'])
+        # print(track_list)
+        return None
+        # print(track_feats.keys())
+        # print(type(track_feats))
+        # print(track_feats.shape)
         pass
     pass
 
 def main(cfg):
-    for mode in ['main', 'test']:
+    # for mode in ['train', 'test']:
+    for mode in ['train']:
         feat_dir = cfg[mode]['feat_dir']
         for track_path in os.listdir(feat_dir):
             full_track_path = osp.join(feat_dir, track_path)
             track_data = pickle_load(full_track_path)
+            new_track_data = add_label(track_data)
+            print(track_data.keys())
+            return
             new_track_data = add_label(track_data)
             pickle_save(new_track_data, full_track_path, verbose=False)
             pass

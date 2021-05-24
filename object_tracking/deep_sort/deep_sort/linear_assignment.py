@@ -93,7 +93,7 @@ def matching_cascade(
         Gating threshold. Associations with cost larger than this value are
         disregarded.
     cascade_depth: int
-        The cascade depth, should be se to the maximum track age.
+        The cascade depth, should be set to the maximum track age.
     tracks : List[track.Track]
         A list of predicted tracks at the current time step.
     detections : List[detection.Detection]
@@ -113,7 +113,6 @@ def matching_cascade(
         * A list of matched track and detection indices.
         * A list of unmatched track indices.
         * A list of unmatched detection indices.
-
     """
     if track_indices is None:
         track_indices = list(range(len(tracks)))
@@ -133,14 +132,12 @@ def matching_cascade(
         if len(track_indices_l) == 0:  # Nothing to match at this level
             continue
 
-        matches_l, _, unmatched_detections = \
-            min_cost_matching(
+        matches_l, _, unmatched_detections = min_cost_matching(
                 distance_metric, max_distance, tracks, detections,
                 track_indices_l, unmatched_detections)
         matches += matches_l
     unmatched_tracks = list(set(track_indices) - set(k for k, _ in matches))
     return matches, unmatched_tracks, unmatched_detections
-
 
 def gate_cost_matrix(
         kf, cost_matrix, tracks, detections, track_indices, detection_indices,
