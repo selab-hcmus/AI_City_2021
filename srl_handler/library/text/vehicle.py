@@ -1,6 +1,3 @@
-import json 
-import os 
-
 class Vehicle(object):
     def __init__(self, vehicle: str, colors: list):
         self.vehicle = vehicle 

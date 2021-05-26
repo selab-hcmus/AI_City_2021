@@ -72,3 +72,84 @@ def scan_images(list_img_path):
     for img_path in tqdm(list_img_path):
         pass
     pass
+
+
+
+def refine_list_colors(list_colors, unique=True):
+    """Refine list colors to achieve valid classes
+
+    Args:
+        list_colors ([type]): List of colors parsed from SRL tools
+        unique (bool, optional): keep unique values only. Use for ohe label
+    """
+    new_list = []
+    new_list = remove_redundant_colors(list_colors)
+    if (is_list_in_list(new_list, ['light_gray'])):
+        new_list = new_list.remove('light_gray')
+        if new_list is None or len(new_list) == 0:
+            new_list = ['gray']
+        else:
+            new_list.append('gray')
+        
+
+    if (is_list_in_list(new_list, ['dark_gray'])):
+        new_list = new_list.remove('dark_gray')
+        if new_list is None or len(new_list) == 0:
+            new_list = ['gray']
+        else:
+            new_list.append('gray')
+        
+    if unique:
+        new_list = list(set(new_list))
+    return new_list
+
+def refine_list_subjects(list_subjects, unique=True, is_subject=True):
+    """Refine list colors to achieve valid classes
+
+    Args:
+        list_colors ([type]): List of colors parsed from SRL tools
+        unique (bool, optional): keep unique values only. Use for ohe label
+        is_subject: flag denotes this list is main subjects 
+                    --> remove common classes (car, vehicle, etc.)
+    """
+    new_list = list_subjects
+    if is_subject:
+        # 1. Remove redundant subjects (car, vehicle)
+        new_list = remove_redundant_subjects(new_list)
+        # 2. Convert all subjects to their representation name of each groups
+        new_list = convert_to_representation_subject(new_list)
+
+    if unique:
+        new_list = list(set(new_list))
+        
+        # 3. Handle ambiguous annotations
+        # [SUV, bus-truck] = [bus-truck]
+        if (is_list_in_list(new_list, ['suv', 'bus-truck'])):
+            new_list = ['suv', 'pickup']
+
+        # [jeep, SUV, ...] = [Jeep, SUV]
+        elif is_list_in_list(new_list, ['jeep', 'suv']):
+            new_list = ['jeep', 'suv']
+        
+        # [jeep, pickup] = jeep
+        elif is_list_in_list(new_list, ['jeep', 'pickup']):
+            new_list = ['jeep']
+
+        # [sedan, suv, van], [sedan, van] = [suv, van]
+        elif (is_list_in_list(new_list, ['sedan', 'suv', 'van']) or 
+            is_list_in_list(new_list, ['sedan', 'van'])
+            ):
+            new_list = ['suv', 'van']
+
+        # [pickup, truck] = [pickup]
+        elif (is_list_in_list(new_list, ['pickup', 'bus-truck'])):
+            new_list = ['pickup']
+
+        # [pickup, sedan, suv] = [pickup, suv]
+        elif (is_list_in_list(new_list, ['sedan', 'suv', 'pickup']) or
+            is_list_in_list(new_list, ['van', 'suv', 'pickup']) or 
+            is_list_in_list(new_list, ['van', 'pickup'])
+            ):
+            new_list = ['suv', 'pickup']
+    
+    return new_list

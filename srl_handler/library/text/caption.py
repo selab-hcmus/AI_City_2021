@@ -18,7 +18,6 @@ class Caption(object):
         self.__dict__.update(cap_content)
         
         self.sv_format, self.svo_format = [], []
-        # self.nlp_model = spacy.load('en')
         self._setup()
         pass
 
@@ -81,11 +80,14 @@ class Caption(object):
                 action = srl['action']
                 obj = self._extract_object(srl)
 
-                if (action in ACTION_VOCAB) and (srl['is_main_subject'] is True):
+                if (not srl['is_main_subject']):
+                    continue 
+
+                if (action in ACTION_VOCAB):
                     self.sv_format.append(self._create_sv_sample(action))
-                else:
+                elif (obj is not None):
                     self.svo_format.append(self._create_svo_sample(action, obj))
-                pass
+        pass
 
             
             

@@ -27,6 +27,9 @@ classifier/results/*
 object_tracking/ckpts/*
 object_tracking/data/*
 object_tracking/results/*
+object_tracking/reid/weights/*
+object_tracking/reid/results/*
+
 
 # Relation graph
 relation_graph/*.avi
