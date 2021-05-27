@@ -15,6 +15,8 @@ def json_load(json_path: str):
 
     return data
 
+
+
 test_track_map = json_load(TEST_TRACK_JSON)
 test_query_map = json_load(TEST_QUERY_JSON)
 train_track_map = json_load(TRAIN_TRACK_JSON)

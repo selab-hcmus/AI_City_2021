@@ -26,7 +26,6 @@ track_json = osp.join(TRAIN_TRACKING_RESULT, f'{test_id}.json')
 track_res = json.load(open(track_json, 'r'))
 DATA_DIR = '../dataset'
 
-
 def get_potential_track(track_dir: str):
     for json_path in glob(track_dir +'/*.json'):
         json_data = json.load(open(json_path, 'r'))
@@ -52,7 +51,6 @@ def cosine_similarity(vect_a, vect_b):
         vect_b = np.array(vect_b)
 
     return np.dot(vect_a, vect_b)/(np.linalg.norm(vect_a)*np.linalg.norm(vect_b)) #default: L2 norm
-
 
 def get_interval_to_check(track_frame_order, overlapped_frame_order):
     start_idx, end_idx = 0, 0

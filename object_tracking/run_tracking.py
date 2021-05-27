@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore")
 from deep_sort.iou_matching import iou
 from dataset.data_manager import test_track_map, train_track_map
 from utils import(
-    get_gt_from_idx, get_dict_track, get_img_name, print_fail_dict,
+    get_gt_from_idx, get_dict_track, get_img_name, print_fail_dict, get_closest_box
 )
 from tools import (
     convert_video_track, visualize
@@ -36,20 +36,6 @@ os.makedirs(SAVE_VISUALIZE_DIR, exist_ok=True)
 
 NUM_TO_EXP = 5
 ID_MAP = {'train': train_track_map, 'test': test_track_map}
-
-def get_closest_box(list_boxes, target_box):
-    new_list_boxes = [item.to_tlbr() for item in list_boxes]
-    
-    target_box = np.array(target_box)
-    candidates = np.array(new_list_boxes)
-
-    target_box[2:] -= target_box[:2]
-    candidates[:, 2:] -= candidates[:, :2]
-    
-    scores = iou(target_box, candidates)
-    best_id = np.argmax(scores)
-
-    return new_list_boxes[best_id]
 
 def tracking(config, json_save_dir: str, vis_save_dir: str, verbose=True):
     mode_json_dir = json_save_dir

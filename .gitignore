@@ -8,7 +8,7 @@ desktop.ini
 
 # dataset
 dataset/*
-!dataset/data_manager.py
+!dataset/*.py
 
 # SRL + retrieval model
 srl_extraction/data/*
@@ -27,11 +27,13 @@ classifier/results/*
 object_tracking/ckpts/*
 object_tracking/data/*
 object_tracking/results/*
+object_tracking/results_compare/*
 object_tracking/reid/weights/*
 object_tracking/reid/results/*
 
 
 # Relation graph
+relation_graph/* 
 relation_graph/*.avi
 
 slurm*

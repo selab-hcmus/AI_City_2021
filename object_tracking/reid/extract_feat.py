@@ -2,6 +2,7 @@ import json, pickle
 import os 
 import os.path as osp 
 import cv2
+from tqdm import tqdm
 
 from dataset.data_manager import (
     train_track_map, test_track_map, 
@@ -42,7 +43,7 @@ def extract_feature(data_track, data_dir, mode_save_dir: str):
     count = 1
     list_keys = list(data_track.keys())
     print(f'Extract {len(list_keys)} tracks')
-    for key_track in data_track:
+    for key_track in list_keys:
         count += 1
         track_save_path = osp.join(mode_save_dir, f'{key_track}.pkl')
         if osp.isfile(track_save_path):
@@ -63,7 +64,7 @@ def extract_feature(data_track, data_dir, mode_save_dir: str):
                 crop = cv_img[y_0:y_1, x_0:x_1, :]
                 list_boxes.append(crop)
             
-            track_feat[frame_path] = extractor(list_boxes)
+            track_feat[frame_path] = extractor(list_boxes).detach().cpu().numpy()
         
         print(f'Extract {count}th')
         pickle_save(track_feat, track_save_path)

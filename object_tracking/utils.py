@@ -2,6 +2,23 @@ import json
 import os 
 import os.path as osp
 from tqdm import tqdm
+import numpy as np
+from deep_sort.iou_matching import iou
+
+def get_closest_box(list_boxes, target_box):
+    new_list_boxes = [item.to_tlbr() for item in list_boxes]
+    
+    target_box = np.array(target_box)
+    candidates = np.array(new_list_boxes)
+
+    target_box[2:] -= target_box[:2]
+    candidates[:, 2:] -= candidates[:, :2]
+    
+    scores = iou(target_box, candidates)
+    best_id = np.argmax(scores)
+
+    return new_list_boxes[best_id]
+
 
 def get_gt_from_idx(idx_image, gt_dict):
     frame_info = gt_dict[idx_image]

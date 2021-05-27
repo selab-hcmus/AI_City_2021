@@ -14,6 +14,9 @@ def visualize(json_data: dict, list_track_ids: list, data_dir: str, vid_save_pat
         pass
     
     vid_height, vid_width, _ = list_frames[0].shape
+    if list_track_ids == None:
+        list_track_ids = list(json_data['track_map'].keys())
+        
     for track_id in list_track_ids:
         track_data = json_data['track_map'][track_id]
         for i in range(len(track_data['boxes'])):
