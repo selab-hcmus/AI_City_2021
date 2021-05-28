@@ -1,5 +1,5 @@
 import json
-from object_tracking.deep_sort.deep_sort import track
+from object_tracking.deep_sort import track
 import pickle 
 import os 
 import os.path as osp 
@@ -21,9 +21,6 @@ TRAIN_TRACKING_RESULT = '../object_tracking/results/annotate_time_train'
 TEST_TRACKING_RESULT = '../object_tracking/results/annotate_time_test'
 
 SAVE_DIR = './data'
-test_id = '0a7b7e50-bb2f-4c33-bf64-63d88b525881'
-track_json = osp.join(TRAIN_TRACKING_RESULT, f'{test_id}.json')
-track_res = json.load(open(track_json, 'r'))
 DATA_DIR = '../dataset'
 
 def get_potential_track(track_dir: str):

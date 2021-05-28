@@ -38,16 +38,10 @@ ID_MAP = {'train': train_track_map, 'test': test_track_map}
 
 def tracking(config, json_save_dir: str, vis_save_dir: str, verbose=True):
     mode_json_dir = json_save_dir
-    
     gt_dict = json.load(open(config["track_dir"]))
     track_keys = listdir(config["feat_dir"])
     print(f'>> Run DeepSort on {config["mode"]} mode, save result to {mode_json_dir}')
 
-    # track_keys = [
-    #     "189bd009-a5db-4103-9edf-754126b34a42.pkl"
-    # ]
-    
-    tracked_count = 0
     for track_order in ID_TO_COMPARE:
         track_order = str(track_order)
         if verbose:
@@ -81,7 +75,6 @@ def tracking(config, json_save_dir: str, vis_save_dir: str, verbose=True):
                 out = cv2.VideoWriter(save_visualize_path,fourcc, 1, (w,h))
 
             detections, out_scores = get_gt_from_idx(i, gt_dict[track_order])
-
             detections = np.array(detections)
             out_scores = np.array(out_scores)
             
@@ -138,24 +131,30 @@ def tracking(config, json_save_dir: str, vis_save_dir: str, verbose=True):
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--save_video", action="store_true", help="Save video or not")
-    parser.add_argument("--exp_id", type=str, default='v1')
+    parser.add_argument("--exp_id", type=str, default='v3')
     args = parser.parse_args()
     return args
 
 if __name__ == '__main__':
     args = get_args()
     config = {
-        "train_old": {
-            "track_dir": TRAIN_TRACK_DIR,
-            "feat_dir": OLD_FEAT_DIR,
-            "save_video": args.save_video,
-            "mode": "train_old"
-        },
-        "train_new": {
+        # "train_old": {
+        #     "track_dir": TRAIN_TRACK_DIR,
+        #     "feat_dir": OLD_FEAT_DIR,
+        #     "save_video": args.save_video,
+        #     "mode": "train_old"
+        # },
+        # "train_new": {
+        #     "track_dir": TRAIN_TRACK_DIR,
+        #     "feat_dir": NEW_FEAT_DIR,
+        #     "save_video": args.save_video,
+        #     "mode": "train_new"
+        # },
+        "train_total": {
             "track_dir": TRAIN_TRACK_DIR,
             "feat_dir": NEW_FEAT_DIR,
             "save_video": args.save_video,
-            "mode": "train_new"
+            "mode": "train_total"
         },
         # "test": {
         #     "track_dir": TEST_TRACK_DIR,
@@ -164,7 +163,7 @@ if __name__ == '__main__':
         #     "mode": "test"
         # },
     }
-    SAVE_DIR = 'results_compare'
+    SAVE_DIR = 'results_exp'
     exp_save_dir = osp.join(SAVE_DIR, f'Exp_{args.exp_id}')
     os.makedirs(exp_save_dir, exist_ok=True)
     

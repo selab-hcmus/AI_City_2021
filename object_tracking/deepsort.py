@@ -7,22 +7,14 @@ import numpy as np
 
 
 class deepsort_rbc():
-	def __init__(self,wt_path=None):
+	def __init__(self):
 		self.metric = nn_matching.NearestNeighborDistanceMetric("cosine",.5 , 100)
 		self.tracker= Tracker(self.metric)
 
 		# self.gaussian_mask = get_gaussian_mask().cuda()
         
 	def reset_tracker(self):
-		self.tracker= Tracker(self.metric)
-
-	#Deep sort needs the format `top_left_x, top_left_y, width,height
-	
-	def format_yolo_output(self,out_boxes):
-		for b in range(len(out_boxes)):
-			out_boxes[b][0] = out_boxes[b][0] - out_boxes[b][2]/2
-			out_boxes[b][1] = out_boxes[b][1] - out_boxes[b][3]/2
-		return out_boxes				
+		self.tracker= Tracker(self.metric)			
 
 	def run_deep_sort(self, out_scores, out_boxes, features):
 		if out_boxes==[]:			

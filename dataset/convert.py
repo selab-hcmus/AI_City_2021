@@ -1,6 +1,8 @@
+from dataset.data_manager import json_load
 import os, sys, pickle, json
 import os.path as osp 
 import pandas as pd 
+from tqdm import tqdm
 
 from utils import (
     json_save
@@ -50,6 +52,34 @@ def get_all_map_dict():
     
     return dict_test_track, dict_test_query, dict_train_track
 
+from data_manager import (
+    DATA_DIR, 
+    TRAIN_TRACK_JSON, TEST_TRACK_JSON, TEST_QUERY_JSON,
+    train_track_map, test_track_map, test_query_map
+)
+def convert_labels():
+    save_name = ['train-tracks_order.json', 'test-tracks_order.json', 'test-queries_order.json']
+    path = [TRAIN_TRACK_JSON, TEST_TRACK_JSON, TEST_QUERY_JSON]
+    list_maps = [train_track_map, test_track_map, test_query_map]
+    save_dir = osp.join(DATA_DIR, 'data')
+    
+    for i in tqdm(range(3)):
+        print(save_name[i])
+        raw_data = json_load(path[i])
+        new_data = {} 
+        map_data = list_maps[i]
+
+        for k in raw_data:
+            new_k = map_data[k]
+            new_data[new_k] = raw_data[k]
+        
+        with open(osp.join(save_dir, save_name[i]), 'w') as f:
+            json.dump(new_data, f, indent=2)
+    
+    print(f'save result to {save_dir}')
+    pass
+
 if __name__ == '__main__':
-    get_all_map_dict()
+    convert_labels()
+    # get_all_map_dict()
     pass
