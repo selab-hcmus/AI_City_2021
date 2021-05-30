@@ -23,7 +23,7 @@ from sklearn.model_selection import StratifiedKFold
 from efficientnet_pytorch import EfficientNet
 from config import CONFIG
 
-VEH_TRAIN_CSV = '../srl_handler/results/veh_train_fraction_new_edited29May.csv'
+VEH_TRAIN_CSV = '../srl_handler/results/jeep_suv.csv'
 VEH_GROUP_JSON = '../srl_handler/data/vehicle_group_v1.json'
 VEH_BOX_DIR = './data/veh_boxes'
 
@@ -107,8 +107,6 @@ def get_dataset(csv_path: str, group_json: str, box_data_dir):
     print("Replaced box dir successfully")
 
     df_filtered = df_full.drop_duplicates(subset='query_id', keep="first")
-    df_filtered['old_index'] = df_filtered.index
-    df_filtered.reset_index(drop=True, inplace=True)
     print("Dropped duplicated rows")
 
     veh_group = json.load(open(group_json, 'r'))
@@ -126,49 +124,22 @@ def get_dataset(csv_path: str, group_json: str, box_data_dir):
 
     filtered_labels = df_filtered['labels']
 
+
     full_train_ids = []
     full_val_ids = []
     count = 1
     n_get = 1
     for train_ids, val_ids in skf.split(df_filtered, filtered_labels):
-        if count == 3:
-            for val in train_ids:
-                full_train_ids.extend(list(range(
-                    df_filtered.iloc[val]["old_index"],
-                    df_filtered.iloc[val]["old_index"] + df_filtered.iloc[val]["freq"])))
-            
-            for val in val_ids:
-                full_val_ids.extend(list(range(
-                    df_filtered.iloc[val]["old_index"],
-                    df_filtered.iloc[val]["old_index"] + df_filtered.iloc[val]["freq"])))
-            
+        if count > n_get:
             break
+        for val in train_ids:
+            full_train_ids.extend(list(range(val*4, (val+1)*4)))
+        for val in val_ids:
+            full_val_ids.extend(list(range(val*4, (val+1)*4)))
         count += 1
 
-    # if box_data_dir == VEH_BOX_DIR:
-    #     count = 1
-    #     truck_label_id = pd.read_csv("../srl_handler/results/truck_label_group.csv")
-    #     label = truck_label_id["label"]
-
-    #     final_train_ids_truck = []
-    #     final_val_ids_truck = []
-
-    #     for train_indices, val_indices in skf.split(truck_label_id, label):
-    #         if count > n_get:
-    #             break
-    #         for id in train_indices:
-    #             list_ids_of_this_id = list(range(truck_label_id.iloc[id]["id"],
-    #                                             truck_label_id.iloc[id]["id"] + truck_label_id.iloc[id]["num_val"]))
-    #             final_train_ids_truck.extend(list_ids_of_this_id)
-    #         for id in val_indices:
-    #             list_ids_of_this_id = list(range(truck_label_id.iloc[id]["id"],
-    #                                             truck_label_id.iloc[id]["id"] + truck_label_id.iloc[id]["num_val"]))
-    #             final_val_ids_truck.extend(list_ids_of_this_id)
-    #         count += 1
-        
-    #     full_train_ids.extend(final_train_ids_truck)
-    #     full_val_ids.extend(final_val_ids_truck)
     print(len(full_train_ids), len(full_val_ids))
+    full_train_ids.extend(full_val_ids)
     df_train, df_val = df_full.iloc[full_train_ids], df_full.iloc[full_val_ids]
     return df_train, df_val
     

@@ -12,22 +12,22 @@ CONFIG = {
     'seed': 88,
 
     'train': {
-        'batch_size': 16,
-        'num_epochs': 20,
+        'batch_size': 32,
+        'num_epochs': 40,
     },
     'val':{
-        'batch_size': 8,
+        'batch_size': 32,
     },
     'save_path': "./results/classifier",
 }
 cfg_veh = CONFIG.copy()
 cfg_col = CONFIG.copy()
 
-date ="May23"
+date ="May30"
 
 cfg_veh.update({
     'NUM_CLASSES': 6,
-    'WEIGHT': f"./results/classifier/{date}/vehicle/best_model.pt",
+    'WEIGHT': f"./results/classifier/May30/vehicle/last_model.pt",
     "date": date,
     "type": "vehicle",
     'output_type': 'one_hot',
@@ -38,6 +38,12 @@ cfg_veh.update({
         3: 'jeep',
         4: 'pickup',
         5: 'bus-truck',
+        'sedan': 0,
+        'suv': 1,
+        'van': 2,
+        'jeep': 3,
+        'pickup': 4,
+        'bus-truck': 5
     },
 })
 

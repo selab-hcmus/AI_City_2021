@@ -17,13 +17,13 @@ from torch.utils.data import Subset, DataLoader, Dataset
 
 from box_extractor import init_model
 from config import cfg_veh, cfg_col
-from dataset import (
+from dataset_jeepsuv import (
     VehicleDataset, get_dataset,
     VEH_TRAIN_CSV, COL_TRAIN_CSV,
     VEH_GROUP_JSON, COL_GROUP_JSON,
     VEH_BOX_DIR, COL_BOX_DIR,
 ) 
-from utils import (
+from utils_jeepsuv import (
     l2_loss, evaluate_fraction, evaluate_tensor, train_model
 )
 
@@ -32,7 +32,7 @@ gc.collect()
 torch.cuda.empty_cache()
 
 
-veh_model, col_model = init_model(cfg_veh, cfg_col, load_ckpt=False)
+veh_model, col_model = init_model(cfg_veh, cfg_col, load_ckpt=True, eval=True)
 veh_model = veh_model.cuda()
 col_model = col_model.cuda()
 
@@ -53,9 +53,9 @@ def train_model_type(model, cfg, csv_path: str, json_path: str, box_dir: str):
         print(f'{k} shape: {sample[k].shape}')
 
     criterion = l2_loss()
-    optimizer = optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-4)
+    optimizer = optim.Adam(model.parameters(), lr=0.0001)
     lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='min', factor=0.1, patience=5, min_lr=1e-07, eps=1e-07, verbose=True)
+        optimizer, mode='min', factor=0.1, patience=10, min_lr=1e-07, eps=1e-07, verbose=True)
 
     dataloaders = {}
     dataloaders['train'] = train_dataloader

@@ -49,7 +49,7 @@ class AverageTracker(object):
         self.avg = self.sum / self.count
 
 def l2_loss():
-    criterion = nn.MSELoss(reduction='mean')
+    criterion = nn.MSELoss(reduction='sum')
     return criterion
 
 def evaluate_tensor(y_pred, y_true, thres=0.5):
