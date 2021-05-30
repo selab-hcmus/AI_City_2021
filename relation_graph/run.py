@@ -1,5 +1,5 @@
 import json
-from object_tracking.deep_sort.deep_sort import track
+from object_tracking.deep_sort import track
 import pickle 
 import os 
 import os.path as osp 
@@ -21,11 +21,7 @@ TRAIN_TRACKING_RESULT = '../object_tracking/results/annotate_time_train'
 TEST_TRACKING_RESULT = '../object_tracking/results/annotate_time_test'
 
 SAVE_DIR = './data'
-test_id = '0a7b7e50-bb2f-4c33-bf64-63d88b525881'
-track_json = osp.join(TRAIN_TRACKING_RESULT, f'{test_id}.json')
-track_res = json.load(open(track_json, 'r'))
 DATA_DIR = '../dataset'
-
 
 def get_potential_track(track_dir: str):
     for json_path in glob(track_dir +'/*.json'):
@@ -37,8 +33,6 @@ def get_potential_track(track_dir: str):
         pass
     pass
     return None, None
-
-
     
 def calculate_distance_vector(coor_a, coor_b, skip_frame=2):
     if skip_frame > len(coor_a):
@@ -54,7 +48,6 @@ def cosine_similarity(vect_a, vect_b):
         vect_b = np.array(vect_b)
 
     return np.dot(vect_a, vect_b)/(np.linalg.norm(vect_a)*np.linalg.norm(vect_b)) #default: L2 norm
-
 
 def get_interval_to_check(track_frame_order, overlapped_frame_order):
     start_idx, end_idx = 0, 0
@@ -158,17 +151,18 @@ def main():
 
     relation_res = {}
     longest_track_id = get_longest_tracklet(track_map)
-    
+    print(f'vid_id: {vid_id}')
+
     # vid_save_path = f'./{vid_id}.avi'
     # visualize(json_data, ['1', '4'], DATA_DIR, vid_save_path)
     # print(f'save video to {vid_save_path}')
 
-    for track_id in ['4', '1']:
-        if stop_detector.process(track_map[track_id]):
-            print(f'Track {track_id} stopped')
-        else:
-            print(f'Track {track_id} did not stop')
-        pass
+    # for track_id in ['4', '1']:
+    #     if stop_detector.process(track_map[track_id]):
+    #         print(f'Track {track_id} stopped')
+    #     else:
+    #         print(f'Track {track_id} did not stop')
+    #     pass
 
     # print('Run relation checking')
     # for track_id in tqdm(list_track_ids):

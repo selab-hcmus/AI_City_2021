@@ -60,7 +60,6 @@ def get_color(spacy_out: str):
             ):
                 color_prop['adv'] = spacy_out[i-1]
             
-
             res.append(color_prop)
     
     return res
@@ -76,10 +75,6 @@ def get_args_from_srl_sample(srl_content: dict):
         return None
 
     return list_args
-
-def refine_list_subjects(list_subjects):
-    
-    pass
 
 # def get_color(spacy_out):
 #     """
