@@ -5,15 +5,18 @@ from tqdm import tqdm
 import numpy as np
 from multiprocessing import Pool
 import shutil
-import time
 import logging
 
 from dataset.data_manager import (
     test_track_map, train_track_map, DATA_DIR,
     TRAIN_TRACK_ORDER_JSON, TEST_TRACK_ORDER_JSON
 )
+from utils import (
+    AverageMeter, xyxy_to_xywh, xywh_to_xyxy
+)
 from test_utils import (
-    json_save, json_load, xyxy_to_xywh, xywh_to_xyxy , AverageMeter, a_substract_b
+    json_save, json_load, a_substract_b,
+    is_miss_frame, get_miss_frame_tracks
 )
 from object_tracking.tools import visualize, visualize_subject
 from object_tracking.deep_sort.iou_matching import iou
@@ -24,24 +27,6 @@ VIDEO_DIR = './results/video_smooth'
 ID_TO_CHECK = [str(i) for i in [5, 6, 9, 84]]
 IOU_ACCEPT_THRES = 0.2
 
-def is_miss_frame(track_data: dict):
-    prev = int(track_data['frame_order'][0])
-    for frame_order in track_data['frame_order'][1:]:
-        order = int(frame_order)
-        if order - prev != 1:
-            return True
-        prev = order
-        pass
-    return False
-
-def get_miss_frame_tracks(vid_data: dict):
-    fail_tracks = []
-    for track_id in vid_data['track_map']:
-        if is_miss_frame(vid_data['track_map'][track_id]):
-            fail_tracks.append(track_id)
-        pass
-    return fail_tracks
-
 ## Get misaligned tracks
 def distance(box_a: list, box_b: list):
     # x, y, w, h
@@ -51,7 +36,6 @@ def distance(box_a: list, box_b: list):
     ya += ha/2
     xb += wb/2
     yb += hb/2
-
     return np.sqrt((xa-xb)**2 + (ya-yb)**2)
 
 def mis_align_box(cur_distance: float, avg_distance: float):
@@ -94,8 +78,6 @@ def get_wrong_tracks(vid_data: dict, list_track_ids: list = None):
         pass
     fail_track_ids = list(fail_info.keys())
     return fail_track_ids, fail_info
-
-
 
 def get_top_longest_tracks(vid_data: dict, top_k: int=5):
     list_lens = []
