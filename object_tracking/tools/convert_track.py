@@ -1,6 +1,11 @@
 import pickle, json, os 
-import os.path as osp 
+import os.path as osp
+from sys import version 
 from tqdm import tqdm
+
+from utils import (
+    json_save, pickle_save
+)
 
 RESULT_DIR = './results'
 TRAIN_RESULTS = osp.join(RESULT_DIR, 'annotate_train')
@@ -17,7 +22,7 @@ data_dir = {
 # os.makedirs(data_dir['test_save'], exist_ok=True)
 
 
-def convert_video_track(video_data, save_path: str=None):
+def convert_video_track(video_data, save_path: str=None, save_feat=False):
     res = {}
     list_frames = list(video_data.keys())
     n_frames = len(list_frames)
@@ -34,11 +39,13 @@ def convert_video_track(video_data, save_path: str=None):
                     'boxes': [],
                     'vehicle_type': [],
                     'color': [],
+                    'features': [],
                 }
             
             tracks_map[track_item['id']]['frame_order'].append(i)
             tracks_map[track_item['id']]['boxes'].append(track_item['box'])
-            # return
+            if save_feat:
+                tracks_map[track_item['id']]['features'].append(track_item['feature']) 
             pass
         pass
 
@@ -49,9 +56,11 @@ def convert_video_track(video_data, save_path: str=None):
     res['track_map'] = tracks_map
 
     if save_path:
-        with open(save_path, 'w') as f:
-            json.dump(res, f, indent=2)
-
+        if save_feat:
+            save_path = save_path.replace('.json', '.pkl')
+            pickle_save(res, save_path)
+        else:
+            json_save(res, save_path)
     return res 
 
 def convert(mode):

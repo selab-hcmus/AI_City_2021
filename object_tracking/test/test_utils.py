@@ -1,38 +1,9 @@
-import json 
+## GLOBAL CONSTANT
+SAVE_DIR = '/home/ntphat/projects/AI_City_2021/object_tracking/results_exp'
+ID_TO_COMPARE = [5, 6, 9, 20, 34, 40, 64, 84, 182, 188, 239, 310, 339, 349, 410, 436, 476]
 
-class AverageMeter(object):
-    """Computes and stores the average and current value"""
-    def __init__(self):
-        self.reset()
 
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
-
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
-
-def xywh_to_xyxy(box):
-    return [box[0], box[1], box[2] + box[0], box[3] + box[1]]
-
-def xyxy_to_xywh(box):
-    return [box[0], box[1], box[2] - box[0], box[3] - box[1]]
-
-def json_save(data, save_path):
-    with open(save_path, 'w') as f:
-        json.dump(data, f, indent=2)
-    pass
-
-def json_load(save_path):
-    data = None
-    with open(save_path, 'r') as f:
-        data = json.load(f)
-    return data
+## HELPER FUNCTIONS
 
 def a_substract_b(list_a: list, list_b: list):
     return [ i for i in list_a if i not in list_b]

@@ -3,7 +3,16 @@ import os
 import os.path as osp
 from tqdm import tqdm
 import numpy as np
-from deep_sort.iou_matching import iou
+from object_tracking.deep_sort.iou_matching import iou
+
+TRAIN_TRACK_DIR = "/home/ntphat/projects/AI_City_2021/classifier/data/Centernet2_train_veh_order.json"
+TEST_TRACK_DIR = "/home/ntphat/projects/AI_City_2021/classifier/data/Centernet2_test_veh_order.json"
+VEHCOL_FEAT_DIR = "/home/ntphat/projects/AI_City_2021/classifier/results/train_feat_tracking"
+REID_FEAT_DIR = "reid/results/train_feat_tracking"
+ROOT_DIR = '/home/ntphat/projects/AI_City_2021/dataset'
+
+TRAIN_TRACKING_RESULT = './results/annotate_time_train'
+TEST_TRACKING_RESULT = './results/annotate_time_test'
 
 def get_closest_box(list_boxes, target_box):
     new_list_boxes = [item.to_tlbr() for item in list_boxes]
@@ -18,7 +27,6 @@ def get_closest_box(list_boxes, target_box):
     best_id = np.argmax(scores)
 
     return new_list_boxes[best_id]
-
 
 def get_gt_from_idx(idx_image, gt_dict):
     frame_info = gt_dict[idx_image]
