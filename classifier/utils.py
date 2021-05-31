@@ -48,9 +48,40 @@ class AverageTracker(object):
         self.count += n
         self.avg = self.sum / self.count
 
+class BceDiceLoss(nn.Module):
+    def __init__(self, weight_bce: float=0.0, weight_dice: float=1.0):
+        super().__init__()
+        self.weight_bce = weight_bce
+        self.weight_dice = weight_dice
+        pass 
+    
+    def forward(self, inp, target):
+        batch_size = inp.shape[0]
+        inp = inp.view(batch_size, -1)
+        target = target.view(batch_size, -1)
+        bce_loss = nn.BCELoss(reduciton='none')(inp, target).mean(dim=-1).double() #[B]
+        dice_coef = (2.0*(inp*target).sum(dim=-1).double() + 1)/(
+            inp.sum(dim=-1).double() + target.sum(dim=-1).double() + 1
+        )
+        dice_loss = 1-dice_coef
+        total_loss = torch.mean(self.weight_bce*bce_loss + self.weight_dice*dice_loss)
+        return total_loss
+    pass
+
 def l2_loss():
     criterion = nn.MSELoss(reduction='mean')
     return criterion
+
+def iou_dice_score(pred, target):
+    batch_size = inp.shape[0]
+    inp = inp.view(batch_size, -1)
+    target = target.view(batch_size, -1)
+    inter = (inp*target).sum(dim=-1)
+    union = (inp+target).sum(dim=-1) - inter 
+    iou = (inter + 1)/(union + 1)
+    dice = (inter + 1)/(union + inter + 1)
+
+    return torch.mean(iou), torch.mean(dice)
 
 def evaluate_tensor(y_pred, y_true, thres=0.5):
     y_pred = y_pred.detach().cpu().numpy()
@@ -94,7 +125,9 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, num_epochs=
     print_every = 400
 
     trackers = {
-        'train': AverageTracker(), 'val': AverageTracker()
+        'train_acc': AverageTracker(), 'val_acc': AverageTracker(),
+        'train_dice': AverageTracker(), 'val_dice': AverageTracker(),
+        'train_iou': AverageTracker(), 'val_iou': AverageTracker(),
     }
     for epoch in range(num_epochs):
         print('-' * 20)
@@ -121,8 +154,6 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, num_epochs=
                 # forward
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs)
-                    # print(f'outputs shape: {outputs.shape}')
-                    # print(f'labels shape: {labels.shape}')
                     loss = criterion(outputs, labels)
                     
                     if phase == 'train':
@@ -130,21 +161,25 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, num_epochs=
                         optimizer.step()
 
                 running_loss += loss.item() * inputs.size(0)
-                it_score = evaluate_fraction(outputs, labels)
-                trackers[phase].update(it_score, n=batch_size)
+                it_acc = evaluate_fraction(outputs, labels)
+                it_iou, it_dice = iou_score(outputs, labels)
+                trackers[f'{phase}_acc'].update(it_acc, n=batch_size)
+                trackers[f'{phase}_iou'].update(it_iou, n=batch_size)
+                trackers[f'{phase}_dice'].update(it_dice, n=batch_size)
 
             # Print after each epoch
             epoch_loss = running_loss / len(dataloaders[phase])
-            epoch_acc = trackers[phase].avg
+            epoch_acc = trackers['{phase}_iou'].avg
             
-            print('[{}, epoch {}/{}] Loss: {:.4f}, Acc: {:.4f}'.format(
-                phase, epoch, num_epochs, epoch_loss, epoch_acc)
+            print('[{}, epoch {}/{}] Loss: {:.4f}, Acc: {:.4f}, Iou: {:.4f}, Dice: {:.4f}'.format(
+                phase, epoch, num_epochs, epoch_loss,  
+                trackers['{phase}_acc'].avg,  trackers['{phase}_iou'].avg,  trackers['{phase}_dice'].avg)
             )
 
             # deep copy the model
             if phase == 'val':
-                if epoch_loss < best_loss:
-                    best_loss = epoch_loss
+                if epoch_acc > best_acc:
+                    best_acc = epoch_acc
                     best_model_wts = copy.deepcopy(model.state_dict())
                     if save_path is not None:
                         save_model_path = osp.join(save_path, "best_model.pt")
@@ -152,11 +187,9 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, num_epochs=
                         print(f"save best model at {epoch}")
                     else:
                         step_count += 1
-                    scheduler.step(epoch_loss)
-
-            if phase == 'val':
-                val_acc_history.append(epoch_loss)
-
+                
+                val_acc_history.append(epoch_acc)
+                scheduler.step(epoch_acc)
 
     torch.save(model.state_dict(), osp.join(save_path, f'last_model.pt'))
     time_elapsed = time.time() - since
@@ -178,6 +211,15 @@ def get_feat_from_subject_box(crop, veh_model, col_model):
 
     feat = torch.cat((veh_feat, col_feat), axis=0)
     return feat
+
+def scan_data(data_loader, name=None):
+    if name is not None:
+        print(f'Scan {name} dataset')
+
+    loader = tqdm(data_loader, total=len(data_loader))
+    for sample in loader:
+        pass
+    pass
 
 def pickle_save(data, save_path, verbose=True):
     with open(save_path, 'wb') as f:

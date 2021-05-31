@@ -24,7 +24,8 @@ from dataset import (
     VEH_BOX_DIR, COL_BOX_DIR,
 ) 
 from utils import (
-    l2_loss, evaluate_fraction, evaluate_tensor, train_model
+    scan_data, evaluate_fraction, evaluate_tensor, train_model,
+    l2_loss, BceDiceLoss
 )
 
 import torch, gc
@@ -52,10 +53,14 @@ def train_model_type(model, cfg, csv_path: str, json_path: str, box_dir: str):
     for k in sample.keys():
         print(f'{k} shape: {sample[k].shape}')
 
-    criterion = l2_loss()
+    scan_data(train_dataloader, name='Train')
+    scan_data(val_dataloader, name='Val')
+
+    # criterion = l2_loss()
+    criterion = BceDiceLoss(weight_bce=0.0, weight_dice=1.0)
     optimizer = optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-4)
     lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='min', factor=0.1, patience=5, min_lr=1e-07, eps=1e-07, verbose=True)
+        optimizer, mode='max', factor=0.1, patience=5, min_lr=1e-07, eps=1e-07, verbose=True)
 
     dataloaders = {}
     dataloaders['train'] = train_dataloader
@@ -63,8 +68,8 @@ def train_model_type(model, cfg, csv_path: str, json_path: str, box_dir: str):
 
     save_path = osp.join(cfg['save_path'], cfg['date'], cfg['type'])
     os.makedirs(save_path, exist_ok=True)
-    print("Created save directory")
-
+    print(f'Save model to {save_path}')
+    
     df_train.to_csv(osp.join(save_path, "train_df.csv"), index = False)
     df_val.to_csv(osp.join(save_path, "val_df.csv"), index = False)
 
@@ -72,7 +77,7 @@ def train_model_type(model, cfg, csv_path: str, json_path: str, box_dir: str):
         model, dataloaders, 
         criterion, optimizer, lr_scheduler, 
         num_epochs=cfg['train']['num_epochs'], 
-        save_path=osp.join(save_path)
+        save_path=save_path
     )
     pass
 

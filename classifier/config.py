@@ -13,7 +13,7 @@ CONFIG = {
 
     'train': {
         'batch_size': 32,
-        'num_epochs': 40,
+        'num_epochs': 50,
     },
     'val':{
         'batch_size': 32,
@@ -23,7 +23,7 @@ CONFIG = {
 cfg_veh = CONFIG.copy()
 cfg_col = CONFIG.copy()
 
-date ="May30"
+date ="May31"
 
 cfg_veh.update({
     'NUM_CLASSES': 6,
