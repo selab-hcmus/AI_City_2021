@@ -61,7 +61,6 @@ def tracking(config, json_save_dir: str, vis_save_dir: str, verbose=True):
         if config["save_video"]:
             fourcc = cv2.VideoWriter_fourcc(*'XVID')
             save_visualize_path = os.path.join(vis_save_dir, f'{track_order}.avi')
-            # out = cv2.VideoWriter(save_visualize_path,fourcc, 2, (1920,1080))
             out = None
 
         for i in tqdm(range(len(img_names))):
@@ -127,7 +126,6 @@ def tracking(config, json_save_dir: str, vis_save_dir: str, verbose=True):
 
     pass
 
-
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--save_video", action="store_true", help="Save video or not")
@@ -135,34 +133,7 @@ def get_args():
     args = parser.parse_args()
     return args
 
-if __name__ == '__main__':
-    args = get_args()
-    config = {
-        # "train_old": {
-        #     "track_dir": TRAIN_TRACK_DIR,
-        #     "feat_dir": OLD_FEAT_DIR,
-        #     "save_video": args.save_video,
-        #     "mode": "train_old"
-        # },
-        # "train_new": {
-        #     "track_dir": TRAIN_TRACK_DIR,
-        #     "feat_dir": NEW_FEAT_DIR,
-        #     "save_video": args.save_video,
-        #     "mode": "train_new"
-        # },
-        "train_total": {
-            "track_dir": TRAIN_TRACK_DIR,
-            "feat_dir": NEW_FEAT_DIR,
-            "save_video": args.save_video,
-            "mode": "train_total"
-        },
-        # "test": {
-        #     "track_dir": TEST_TRACK_DIR,
-        #     "feat_dir": TEST_FEAT_DIR,
-        #     "save_video": args.save_video,
-        #     "mode": "test"
-        # },
-    }
+def main1(config):
     SAVE_DIR = 'results_exp'
     exp_save_dir = osp.join(SAVE_DIR, f'Exp_{args.exp_id}')
     os.makedirs(exp_save_dir, exist_ok=True)
@@ -176,5 +147,34 @@ if __name__ == '__main__':
         os.makedirs(vid_save_dir, exist_ok=True)
         
         tracking(config[mode], json_save_dir, vid_save_dir)
+    pass
+
+if __name__ == '__main__':
+    args = get_args()
+    config1 = {
+        "train_old": {
+            "track_dir": TRAIN_TRACK_DIR,
+            "feat_dir": OLD_FEAT_DIR,
+            "save_video": args.save_video,
+            "mode": "train_old"
+        },
+        "train_new": {
+            "track_dir": TRAIN_TRACK_DIR,
+            "feat_dir": NEW_FEAT_DIR,
+            "save_video": args.save_video,
+            "mode": "train_new"
+        },
+    }
+    main1(config1)
+    
+    config2 = {
+        "train_total": {
+            "track_dir": TRAIN_TRACK_DIR,
+            "feat_dir": NEW_FEAT_DIR,
+            "save_video": args.save_video,
+            "mode": "train_total"
+        },
+    }
+    
 
 

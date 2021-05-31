@@ -59,8 +59,6 @@ def mis_align_box(cur_distance: float, avg_distance: float):
         return True
     return False
 
-# def interpolate_box(prev_box, )
-
 def get_wrong_frames(track_data):
     list_frames, list_boxes = track_data['frame_order'], track_data['boxes']
     prev_frame, prev_box = list_frames[0], xyxy_to_xywh(list_boxes[0])
