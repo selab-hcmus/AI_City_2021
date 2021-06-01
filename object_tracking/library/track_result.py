@@ -3,6 +3,7 @@
 Input: pkl file created by convert_video_track (object_tracking/tools/convert_track.py)
 """
 
+from dataset.data_manager import json_load
 from utils import pickle_load
 
 class TrackResult(object):
@@ -15,7 +16,11 @@ class TrackResult(object):
         self.boxes = track_info['boxes']
         self.vehicle_type = track_info['vehicle_type']
         self.color = track_info['color']
-        self.features = track_info['features']
+
+        self.features = []
+        if track_info.get('features') is not None:
+            self.features = track_info['features']
+        
         pass
     pass
 
@@ -30,7 +35,11 @@ class VideoResult(object):
         pass
     
     def _setup(self, save_path):
-        data = pickle_load(save_path)
+        if '.pkl' in save_path:
+            data = pickle_load(save_path)
+        else:
+            data = json_load(save_path)
+
         self.list_frames = data['list_frames']
         self.n_frames = data['n_frames']
         self.frame_ids = data['frame_ids']

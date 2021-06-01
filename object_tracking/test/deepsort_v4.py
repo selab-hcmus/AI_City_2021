@@ -13,11 +13,13 @@ from object_tracking.utils import (
 )
 from object_tracking.tools import convert_video_track, visualize
 from object_tracking.test.test_utils import SAVE_DIR, ID_TO_COMPARE
+from object_tracking.test.evaluate_subject import TRAIN_SVO_IDS
 from object_tracking.deepsort_feat import deepsort_rbc
 
-save_dir = osp.join(SAVE_DIR, 'deepsort_v5')
+save_dir = osp.join(SAVE_DIR, 'deepsort_v4-1')
 save_json_dir = osp.join(save_dir, 'json')
 save_vis_dir = osp.join(save_dir, 'video')
+print(f'Save exp results to {save_dir}')
 os.makedirs(save_dir, exist_ok=True)
 os.makedirs(save_json_dir, exist_ok=True)
 os.makedirs(save_vis_dir, exist_ok=True)
@@ -30,13 +32,13 @@ def concat_feat(vehcol_feats: list, reid_feats: list):
 
     return new_feats
 
-
-def tracking(config: dict, json_save_dir: str, vis_save_dir: str, verbose=True):
+TOP_BOX = 15
+def tracking(config: dict, json_save_dir: str, vis_save_dir: str, verbose=False):
     mode_json_dir = json_save_dir
     gt_dict = json_load(config["track_dir"])
     print(f'>> Run DeepSort on {config["mode"]} mode, save result to {mode_json_dir}')
 
-    for track_order in ID_TO_COMPARE:
+    for track_order in tqdm(TRAIN_SVO_IDS):
         track_order = str(track_order)
         if verbose:
             print(f'tracking order {track_order}')
@@ -57,7 +59,7 @@ def tracking(config: dict, json_save_dir: str, vis_save_dir: str, verbose=True):
             save_visualize_path = os.path.join(vis_save_dir, f'{track_order}.avi')
             out = None
 
-        for i in tqdm(range(len(img_names))):
+        for i in (range(len(img_names))):
             img_path = osp.join(ROOT_DIR, img_names[i])
 
             frame = cv2.imread(img_path)
@@ -71,11 +73,15 @@ def tracking(config: dict, json_save_dir: str, vis_save_dir: str, verbose=True):
             detections = np.array(detections)
             out_scores = np.array(out_scores)
             
-            vehcol_features = vehcol_feat[img_names[i]]
+            # vehcol_features = vehcol_feat[img_names[i]]
             reid_features = reid_feat[img_names[i]]
-            new_feats = concat_feat(vehcol_features, reid_features)
+            # new_feats = concat_feat(vehcol_features, reid_features)
 
-            features = new_feats
+            features = reid_features
+            # if len(features) > TOP_BOX:
+            #     detections = detections[:TOP_BOX]
+            #     out_scores = out_scores[:TOP_BOX]
+            #     features = features[:TOP_BOX]
             
             tracker, detections_class = deepsort.run_deep_sort(out_scores, detections, features)
 
@@ -131,4 +137,4 @@ if __name__ == '__main__':
             "save_feat": False,
         },
     }
-    tracking(config['train_total'], save_json_dir, save_vis_dir, verbose=True)
+    tracking(config['train_total'], save_json_dir, save_vis_dir, verbose=False)

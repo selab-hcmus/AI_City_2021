@@ -4,7 +4,6 @@ import cv2, pickle
 import os
 from os import listdir
 import os.path as osp 
-from deepsort import deepsort_rbc
 import json
 from tqdm import tqdm
 import argparse
@@ -12,10 +11,11 @@ import warnings
 warnings.filterwarnings("ignore")
 
 from dataset.data_manager import test_track_map, train_track_map
+from object_tracking.deepsort import deepsort_rbc
 from utils import(
     get_gt_from_idx, get_dict_track, get_img_name, print_fail_dict, get_closest_box
 )
-from tools import (
+from object_tracking.tools import (
     convert_video_track, visualize
 )
 
