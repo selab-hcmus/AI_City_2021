@@ -1,14 +1,15 @@
-from object_tracking.deep_sort import nn_matching
-from object_tracking.deep_sort.tracker import Tracker 
-import object_tracking.deep_sort.preprocessing as prep
-from object_tracking.deep_sort.detection import Detection
+from object_tracking.deep_sort_feat import nn_matching
+from object_tracking.deep_sort_feat.tracker import Tracker 
+import object_tracking.deep_sort_feat.preprocessing as prep
+from object_tracking.deep_sort_feat.detection import Detection
+
 
 import numpy as np
 
 
 class deepsort_rbc():
 	def __init__(self):
-		self.metric = nn_matching.NearestNeighborDistanceMetric("cosine",.5 , 70)
+		self.metric = nn_matching.NearestNeighborDistanceMetric("cosine",.4 , 70)
 		self.tracker= Tracker(self.metric)
 
 		# self.gaussian_mask = get_gaussian_mask().cuda()
@@ -25,13 +26,12 @@ class deepsort_rbc():
 
 		detections = np.array(out_boxes)
 		dets = [Detection(bbox, score, feature) \
-					for bbox, score, feature in \
-						zip(detections, out_scores, features)]
+				for bbox, score, feature in zip(detections, out_scores, features)]
 
 		outboxes = np.array([d.tlwh for d in dets])
 		outscores = np.array([d.confidence for d in dets])
 
-		indices = prep.non_max_suppression(outboxes, 0.8, outscores)
+		indices = prep.non_max_suppression(outboxes, 0.8, None)
 		dets = [dets[i] for i in indices]
 
 		self.tracker.predict()

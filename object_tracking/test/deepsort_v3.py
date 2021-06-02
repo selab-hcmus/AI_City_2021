@@ -1,45 +1,41 @@
-import numpy as np
-import torch
-import cv2, pickle
 import os
-from os import listdir
-import os.path as osp 
-import json
+import os.path as osp
+from numpy.lib.npyio import save
+import cv2
 from tqdm import tqdm
-import argparse
-import warnings
-warnings.filterwarnings("ignore")
+import numpy as np
 
-from dataset.data_manager import test_track_map, train_track_map
+from utils import json_load, json_save, pickle_load, pickle_save
+from object_tracking.utils import (
+    ROOT_DIR,
+    TRAIN_TRACK_DIR, TEST_TRACK_DIR, VEHCOL_FEAT_DIR, REID_FEAT_DIR,
+    get_img_name, get_gt_from_idx, get_closest_box, 
+)
+from object_tracking.tools import convert_video_track, visualize
+from object_tracking.test.test_utils import (
+    SAVE_DIR
+)
 from object_tracking.deepsort import deepsort_rbc
-from utils import(
-    get_gt_from_idx, get_dict_track, get_img_name, print_fail_dict, get_closest_box
-)
-from object_tracking.tools import (
-    convert_video_track, visualize
-)
 
-TRAIN_TRACK_DIR = "../classifier/data/Centernet2_train_veh_order.json"
-TEST_TRACK_DIR = "../classifier/data/Centernet2_test_veh_order.json"
+save_dir = osp.join(SAVE_DIR, 'deepsort_v3')
+save_json_dir = osp.join(save_dir, 'json')
+save_vis_dir = osp.join(save_dir, 'video')
+os.makedirs(save_json_dir, exist_ok=True)
+os.makedirs(save_vis_dir, exist_ok=True)
 
-# ROOT_DIR = '/content/drive/MyDrive/THESIS/AI_CITY_2021/DATA/data_track_5/AIC21_Track5_NL_Retrieval'
-# Use this below code when you have placed the dataset folder inside this project
-ROOT_DIR = '../dataset'
-VEHCOL_FEAT_DIR = "../classifier/results/train_feat_tracking"
-REID_FEAT_DIR = "reid/results/train_feat_tracking"
+ID_TO_COMPARE = [5, 6, 20, 34, 40, 64, 182, 188, 239, 310, 339, 349, 410, 436, 476]
 
-SAVE_JSON_DIR = './results/annotate'
-SAVE_VISUALIZE_DIR = './results/video'
-os.makedirs(SAVE_JSON_DIR, exist_ok=True)
-os.makedirs(SAVE_VISUALIZE_DIR, exist_ok=True)
+def concat_feat(vehcol_feats: list, reid_feats: list):
+    new_feats = []
+    for feat_a, feat_b in zip(vehcol_feats, reid_feats):
+        new_feats.append(np.concatenate([feat_a, feat_b], axis=0))
 
-ID_TO_COMPARE = [0, 1, 2, 3, 4, 5, 6]
-ID_MAP = {'train': train_track_map, 'test': test_track_map}
+    return new_feats
 
-def tracking(config, json_save_dir: str, vis_save_dir: str, verbose=True):
+
+def tracking(config: dict, json_save_dir: str, vis_save_dir: str, verbose=True):
     mode_json_dir = json_save_dir
-    gt_dict = json.load(open(config["track_dir"]))
-    track_keys = listdir(config["feat_dir"])
+    gt_dict = json_load(config["track_dir"])
     print(f'>> Run DeepSort on {config["mode"]} mode, save result to {mode_json_dir}')
 
     for track_order in ID_TO_COMPARE:
@@ -49,12 +45,12 @@ def tracking(config, json_save_dir: str, vis_save_dir: str, verbose=True):
         img_dict = gt_dict[track_order]
         img_names = get_img_name(img_dict)
         
-        feat_path = os.path.join(config["feat_dir"], f"{track_order}.pkl")
-        with open(feat_path, 'rb') as handle:
-            frame_feat = pickle.load(handle)
+        vehcol_feat_path = osp.join(VEHCOL_FEAT_DIR, f'{track_order}.pkl')
+        reid_feat_path = osp.join(REID_FEAT_DIR, f'{track_order}.pkl')
+        vehcol_feat = pickle_load(vehcol_feat_path)
+        reid_feat = pickle_load(reid_feat_path)
 
         ans = {}
-
         #Initialize deep sort.
         deepsort = deepsort_rbc()
 
@@ -64,7 +60,7 @@ def tracking(config, json_save_dir: str, vis_save_dir: str, verbose=True):
             out = None
 
         for i in tqdm(range(len(img_names))):
-            img_path = os.path.join(ROOT_DIR, img_names[i])
+            img_path = osp.join(ROOT_DIR, img_names[i])
 
             frame = cv2.imread(img_path)
             frame = frame.astype(np.uint8)
@@ -77,7 +73,11 @@ def tracking(config, json_save_dir: str, vis_save_dir: str, verbose=True):
             detections = np.array(detections)
             out_scores = np.array(out_scores)
             
-            features = frame_feat[img_names[i]]
+            vehcol_features = vehcol_feat[img_names[i]]
+            reid_features = reid_feat[img_names[i]]
+            new_feats = concat_feat(vehcol_features, reid_features)
+
+            features = new_feats
             
             tracker, detections_class = deepsort.run_deep_sort(out_scores, detections, features)
 
@@ -126,55 +126,12 @@ def tracking(config, json_save_dir: str, vis_save_dir: str, verbose=True):
 
     pass
 
-def get_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--save_video", action="store_true", help="Save video or not")
-    parser.add_argument("--exp_id", type=str, default='v3')
-    args = parser.parse_args()
-    return args
-
-def main1(config):
-    SAVE_DIR = 'results_exp'
-    exp_save_dir = osp.join(SAVE_DIR, f'Exp_{args.exp_id}')
-    os.makedirs(exp_save_dir, exist_ok=True)
-    
-
-    for mode in config:
-        print(f'Run on mode {mode}')
-        json_save_dir = osp.join(exp_save_dir, f'{mode}_json')
-        vid_save_dir = osp.join(exp_save_dir, f'{mode}_video')
-        os.makedirs(json_save_dir, exist_ok=True)
-        os.makedirs(vid_save_dir, exist_ok=True)
-        
-        tracking(config[mode], json_save_dir, vid_save_dir)
-    pass
-
 if __name__ == '__main__':
-    args = get_args()
-    config1 = {
-        "train_old": {
-            "track_dir": TRAIN_TRACK_DIR,
-            "feat_dir": OLD_FEAT_DIR,
-            "save_video": args.save_video,
-            "mode": "train_old"
-        },
-        "train_new": {
-            "track_dir": TRAIN_TRACK_DIR,
-            "feat_dir": NEW_FEAT_DIR,
-            "save_video": args.save_video,
-            "mode": "train_new"
-        },
-    }
-    main1(config1)
-    
-    config2 = {
+    config = {
         "train_total": {
             "track_dir": TRAIN_TRACK_DIR,
-            "feat_dir": NEW_FEAT_DIR,
-            "save_video": args.save_video,
-            "mode": "train_total"
+            "mode": "train_total",
+            "save_video": True,
         },
     }
-    
-
-
+    tracking(config['train_total'], save_json_dir, save_vis_dir, verbose=True)

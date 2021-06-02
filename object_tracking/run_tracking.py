@@ -138,7 +138,6 @@ def tracking(config, json_save_dir: str, vis_save_dir: str, verbose=True):
 
     pass
 
-
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--save_video", action="store_true", help="Save video or not")
