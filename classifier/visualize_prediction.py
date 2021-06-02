@@ -36,7 +36,7 @@ def visualize_prediction(img_path, label, predict, config):
             image_editable = ImageDraw.Draw(img_copy)
             image_editable.text((10,10), text)
             img_name = os.path.split(img_path)[-1]
-            save_path = f"./results/classifier/{config['date']}/vehicle/last_model/{CLASS_MAP[i]}/{img_name}"
+            save_path = f"./results/classifier/{config['date']}/vehicle/visualize/{CLASS_MAP[i]}/{img_name}"
             img_copy.save(save_path)
             flag = True
 
@@ -45,7 +45,7 @@ def visualize_prediction(img_path, label, predict, config):
         image_editable = ImageDraw.Draw(img_copy)
         image_editable.text((10,10), text)
         img_name = os.path.split(img_path)[-1]
-        save_path = f"./results/classifier/{config['date']}/vehicle/last_model/cannot_detect/{img_name}"
+        save_path = f"./results/classifier/{config['date']}/vehicle/visualize/cannot_detect/{img_name}"
         img_copy.save(save_path)
     
     row_dict["can_detect"] = flag
@@ -55,20 +55,22 @@ def visualize_prediction(img_path, label, predict, config):
 def visualize_data(model, data_path, config):
     data_df = pd.read_csv(data_path)
     final_ans = []
-    for index, row in tqdm(data_df.iterrows()):
+    for index, row in tqdm(data_df.iterrows(), total=len(data_df)):
         ans = label_prediction(model, row["paths"])
         row_dict = visualize_prediction(row["paths"], literal_eval(row["labels"]), ans, config)
         final_ans.append(row_dict)
     ans_df = pd.DataFrame(data=final_ans)
-    ans_df.to_csv(f"./results/classifier/{config['date']}/vehicle/last_model/predict_answer.csv", index=False)
+    ans_df.to_csv(f"./results/classifier/{config['date']}/vehicle/visualize/predict_answer.csv", index=False)
 
 def main_veh():
+    print(f"Load weight from {cfg_veh['WEIGHT']}")
     veh_model, _ = init_model(cfg_veh, cfg_col, load_ckpt=True, eval=True)
     veh_model = veh_model.cuda()
 
     root_dir = f"./results/classifier/{cfg_veh['date']}/vehicle/"
-    save_dir = osp.join(root_dir, "last_model")
+    save_dir = osp.join(root_dir, "visualize")
     os.makedirs(save_dir, exist_ok=True)
+    print(f'Visualize predictions to {save_dir}')
     
     for key, val in cfg_veh["class_map"].items():
         if (type(val) == int):

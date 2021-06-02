@@ -23,22 +23,23 @@ from dataset import (
     VEH_GROUP_JSON, COL_GROUP_JSON,
     VEH_BOX_DIR, COL_BOX_DIR,
 ) 
-from utils import (
-    scan_data, evaluate_fraction, evaluate_tensor, train_model,
-    l2_loss, BceDiceLoss
-)
+import loss
+from loss import l2_loss, BceDiceLoss, TSA_BceDiceLoss
+from utils import scan_data, evaluate_fraction, evaluate_tensor, train_model
 
-import torch, gc
-gc.collect()
-torch.cuda.empty_cache()
-
-
-veh_model, col_model = init_model(cfg_veh, cfg_col, load_ckpt=False)
+UP_TRAIN = cfg_veh['uptrain']
+if UP_TRAIN:
+    veh_model, col_model = init_model(cfg_veh, cfg_col, load_ckpt=True, eval=False)
+else:
+    veh_model, col_model = init_model(cfg_veh, cfg_col, load_ckpt=False, eval=False)
 veh_model = veh_model.cuda()
 col_model = col_model.cuda()
 
-def train_model_type(model, cfg, csv_path: str, json_path: str, box_dir: str):
-    df_train, df_val = get_dataset(csv_path, json_path, box_dir)
+
+def train_model_type(model, cfg, csv_path: str, json_path: str, box_dir: str, up_train:bool=False):
+    df_train, df_val, df_full = get_dataset(csv_path, json_path, box_dir)
+    if up_train:
+        df_train = df_full
 
     train_dataset = VehicleDataset(df_train, 'train')
     val_dataset = VehicleDataset(df_val, 'val')
@@ -57,7 +58,9 @@ def train_model_type(model, cfg, csv_path: str, json_path: str, box_dir: str):
     scan_data(val_dataloader, name='Val')
 
     # criterion = l2_loss()
-    criterion = BceDiceLoss(weight_bce=0.0, weight_dice=1.0)
+    criterion_class = getattr(loss, cfg_veh['loss']['name'])
+    criterion = criterion_class(**cfg_veh['loss']['args'])
+    # criterion = BceDiceLoss(weight_bce=0.0, weight_dice=1.0)
     optimizer = optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-4)
     lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode='max', factor=0.1, patience=5, min_lr=1e-07, eps=1e-07, verbose=True)
@@ -83,12 +86,30 @@ def train_model_type(model, cfg, csv_path: str, json_path: str, box_dir: str):
 
 def train_vehicle():
     print(f'TRAIN VEHICLE')
-    train_model_type(veh_model, cfg_veh, VEH_TRAIN_CSV, VEH_GROUP_JSON, VEH_BOX_DIR)
+    train_model_type(veh_model, cfg_veh, VEH_TRAIN_CSV, VEH_GROUP_JSON, VEH_BOX_DIR, UP_TRAIN)
     pass
 
 def train_color():
     print(f'TRAIN COLOR')
-    train_model_type(col_model, cfg_col, COL_TRAIN_CSV, COL_GROUP_JSON, COL_BOX_DIR)
+    train_model_type(col_model, cfg_col, COL_TRAIN_CSV, COL_GROUP_JSON, COL_BOX_DIR, False)
+    pass
+
+
+import seaborn as sns
+def test_loss():
+    # test lr
+    criterion_class = getattr(loss, cfg_veh['loss']['name'])
+    criterion = criterion_class(**cfg_veh['loss']['args'])
+    list_thres = []
+    list_it = []
+    print(cfg_veh['loss'])
+    for i in range(criterion.num_steps):
+        list_it.append(i)
+        list_thres.append(criterion.threshold().item())
+        criterion.step()
+        pass
+    plot = sns.lineplot(x=list_it, y=list_thres)
+    plot.figure.savefig('./tsa_thres_alpha3.png')
     pass
 
 
@@ -99,4 +120,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    pass
