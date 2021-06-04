@@ -16,6 +16,8 @@ from dataset.data_manager import (
 from utils import (
     AverageMeter, xyxy_to_xywh, xywh_to_xyxy, json_save, json_load
 )
+print(sys.path)
+print(AverageMeter)
 from object_tracking.test.test_utils import (
     a_substract_b, is_miss_frame, get_miss_frame_tracks, calculate_iou, calculate_distance,
     SAVE_DIR
@@ -119,7 +121,7 @@ def check_track_subject(save_dir: str, vid_save_dir: str, json_dir: str=TRAIN_TR
     
     return total_score_dict
 
-if __name__ == '__main__':
+def main():
     exp_id = 'test_deepsort_v4-1'
     sub_id = 'subject_v1'
 
@@ -153,6 +155,8 @@ if __name__ == '__main__':
             data['subject'] = None
         json_save(data, osp.join(new_json_dir, f"{sample['track_id']}.json"))
         pass
+
+
     # fail_ids = df_score[df_score['is_perfect'] == False]['track_id'].values.tolist()
     # fail_ids.sort()
     # for i in fail_ids:
@@ -164,3 +168,6 @@ if __name__ == '__main__':
 
     pass
 
+if __name__ == '__main__':
+    # main()
+    pass

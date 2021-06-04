@@ -8,7 +8,7 @@ setup(
     author="Tien-Phat Nguyen, Ba-Thinh Tran-Le",
     url="https://github.com/selab-hcmus/AI_City_2021",
     packages=find_namespace_packages(
-        exclude=["assets", "dataset", "visualize_tool"]
+        exclude=["assets", "dataset", "visualize_tool", "object_tracking/resuls", "object_tracking/resuls_exp"]
     ),
     include_package_data=True,
     zip_safe=True,

@@ -1,21 +1,17 @@
-import os, json, cv2, time, copy, pickle
+import os, time, copy, pickle
 import os.path as osp 
-import pandas as pd 
 from tqdm import tqdm
-from glob import glob
 import numpy as np
 from PIL import Image
 
 import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.optim import lr_scheduler
-import torchvision
-from torchvision import datasets, models, transforms
-from torchvision.datasets import ImageFolder
+from torchvision import transforms
 import PIL
 
-from loss import l2_loss, BceDiceLoss
+from classifier.loss import l2_loss, BceDiceLoss
+from classifier.box_extractor import BoxClassifier
+from utils import AverageMeter
+
 
 ### CONSTANT
 IMAGE_SIZE = (224,224)
@@ -32,23 +28,6 @@ def preprocess_input(img):
     img = img.convert('RGB')
     img = val_transform(img)
     return img
-
-class AverageTracker(object):
-    """Computes and stores the average and current value"""
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
-
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
 
 def iou_dice_score(pred, target):
     batch_size = pred.shape[0]
@@ -98,14 +77,12 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, num_epochs=
 
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
-    best_loss = float("inf")
     step_count = 0
-    print_every = 400
 
     trackers = {
-        'train_acc': AverageTracker(), 'val_acc': AverageTracker(),
-        'train_dice': AverageTracker(), 'val_dice': AverageTracker(),
-        'train_iou': AverageTracker(), 'val_iou': AverageTracker(),
+        'train_acc': AverageMeter(), 'val_acc': AverageMeter(),
+        'train_dice': AverageMeter(), 'val_dice': AverageMeter(),
+        'train_iou': AverageMeter(), 'val_iou': AverageMeter(),
     }
     for epoch in range(num_epochs):
         print('-' * 20)
@@ -185,6 +162,13 @@ def get_feat_from_subject_box(crop, veh_model, col_model):
 
     feat = torch.cat((veh_feat, col_feat), axis=0)
     return feat
+
+@torch.no_grad()
+def get_feat_from_model(list_crops: list, model: BoxClassifier):
+    list_tensors = [preprocess_input(Image.fromarray(crop).convert('RGB')) for crop in list_crops]
+    images = torch.stack(list_tensors, dim=0).cuda()
+
+    return model.extract_feature(images)
 
 def scan_data(data_loader, name=None):
     if name is not None:
