@@ -15,6 +15,8 @@ from torchvision import datasets, models, transforms
 from torchvision.datasets import ImageFolder
 import PIL
 
+from loss import l2_loss, BceDiceLoss
+
 ### CONSTANT
 IMAGE_SIZE = (224,224)
 MEAN = [0.485, 0.456, 0.406]
@@ -48,38 +50,14 @@ class AverageTracker(object):
         self.count += n
         self.avg = self.sum / self.count
 
-class BceDiceLoss(nn.Module):
-    def __init__(self, weight_bce: float=0.0, weight_dice: float=1.0):
-        super().__init__()
-        self.weight_bce = weight_bce
-        self.weight_dice = weight_dice
-        pass 
-    
-    def forward(self, inp, target):
-        batch_size = inp.shape[0]
-        inp = inp.view(batch_size, -1)
-        target = target.view(batch_size, -1)
-        bce_loss = nn.BCELoss(reduciton='none')(inp, target).mean(dim=-1).double() #[B]
-        dice_coef = (2.0*(inp*target).sum(dim=-1).double() + 1)/(
-            inp.sum(dim=-1).double() + target.sum(dim=-1).double() + 1
-        )
-        dice_loss = 1-dice_coef
-        total_loss = torch.mean(self.weight_bce*bce_loss + self.weight_dice*dice_loss)
-        return total_loss
-    pass
-
-def l2_loss():
-    criterion = nn.MSELoss(reduction='mean')
-    return criterion
-
 def iou_dice_score(pred, target):
-    batch_size = inp.shape[0]
-    inp = inp.view(batch_size, -1)
+    batch_size = pred.shape[0]
+    inp = pred.view(batch_size, -1)
     target = target.view(batch_size, -1)
     inter = (inp*target).sum(dim=-1)
     union = (inp+target).sum(dim=-1) - inter 
     iou = (inter + 1)/(union + 1)
-    dice = (inter + 1)/(union + inter + 1)
+    dice = (2*inter + 1)/(union + inter + 1)
 
     return torch.mean(iou), torch.mean(dice)
 
@@ -141,7 +119,8 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, num_epochs=
 
             running_loss = 0.0
             running_corrects = 0
-            trackers[phase].reset()
+            for k in trackers:
+                trackers[k].reset()
 
             loader = tqdm(enumerate(dataloaders[phase]), total=len(dataloaders[phase]))
             for it, data in loader:
@@ -162,21 +141,16 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, num_epochs=
 
                 running_loss += loss.item() * inputs.size(0)
                 it_acc = evaluate_fraction(outputs, labels)
-                it_iou, it_dice = iou_score(outputs, labels)
+                it_iou, it_dice = iou_dice_score(outputs, labels)
                 trackers[f'{phase}_acc'].update(it_acc, n=batch_size)
                 trackers[f'{phase}_iou'].update(it_iou, n=batch_size)
                 trackers[f'{phase}_dice'].update(it_dice, n=batch_size)
 
             # Print after each epoch
             epoch_loss = running_loss / len(dataloaders[phase])
-            epoch_acc = trackers['{phase}_iou'].avg
+            epoch_acc = trackers[f'{phase}_iou'].avg
             
-            print('[{}, epoch {}/{}] Loss: {:.4f}, Acc: {:.4f}, Iou: {:.4f}, Dice: {:.4f}'.format(
-                phase, epoch, num_epochs, epoch_loss,  
-                trackers['{phase}_acc'].avg,  trackers['{phase}_iou'].avg,  trackers['{phase}_dice'].avg)
-            )
-
-            # deep copy the model
+            print(f"[{phase}] Loss: {epoch_loss:.4f}, Acc: {trackers[f'{phase}_acc'].avg:.4f}, Iou: {trackers[f'{phase}_iou'].avg:.4f}, Dice: {trackers[f'{phase}_dice'].avg:.4f}, Lr: {optimizer.param_groups[0]['lr']}")
             if phase == 'val':
                 if epoch_acc > best_acc:
                     best_acc = epoch_acc

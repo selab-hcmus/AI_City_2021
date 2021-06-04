@@ -47,7 +47,7 @@ class VehicleDataset(Dataset):
     def _setup_transform(self):
         self.train_transform = transforms.Compose([
             transforms.Resize(CONFIG['image_size'], PIL.Image.BICUBIC),
-            transforms.CenterCrop(CONFIG['image_size']),
+            # transforms.CenterCrop(CONFIG['image_size']),
             transforms.RandomHorizontalFlip(p=0.8),
             transforms.RandomAffine(30, translate=[0.1, 0.1], scale=[0.9, 1.1]), 
             transforms.ColorJitter(brightness=(0.8, 1.2), contrast=(0.75, 1.25)),
@@ -168,7 +168,6 @@ def get_dataset(csv_path: str, group_json: str, box_data_dir):
         
     #     full_train_ids.extend(final_train_ids_truck)
     #     full_val_ids.extend(final_val_ids_truck)
-    print(len(full_train_ids), len(full_val_ids))
     df_train, df_val = df_full.iloc[full_train_ids], df_full.iloc[full_val_ids]
-    return df_train, df_val
+    return df_train, df_val, df_full
     

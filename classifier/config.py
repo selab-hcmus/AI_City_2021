@@ -10,25 +10,48 @@ CONFIG = {
     "imagenet_std":[0.229, 0.224, 0.225],
     'score_thres': 0.5,
     'seed': 88,
-
+    'uptrain': True,
+    
     'train': {
         'batch_size': 32,
-        'num_epochs': 50,
+        'num_epochs': 10,
     },
     'val':{
         'batch_size': 32,
     },
-    'save_path': "./results/classifier",
+    'date': "May31_uptrain", 
+    'save_path': "./results/classifier", #Training log will be saved at save_path/<mode>/date
+    # 'loss': {
+    #     'name': 'TSA_BceDiceLoss',
+    #     'args': {
+    #         'weight_bce': 0.0,
+    #         'weight_dice': 1.0,
+    #         'alpha': 5.0, 
+    #         'num_classes': None,
+    #         'num_steps': None
+    #     }
+    # },
+    'loss': {
+        'name': 'BceDiceLoss',
+        'args': {
+            'weight_bce': 0.0,
+            'weight_dice': 1.0
+        }
+    },
+    # 'loss': {
+    #     'name': 'l2_loss',
+    #     'args': {
+    #         'reduction': 'mean'
+    #     }
+    # }
 }
+
 cfg_veh = CONFIG.copy()
 cfg_col = CONFIG.copy()
 
-date ="May31"
-
 cfg_veh.update({
     'NUM_CLASSES': 6,
-    'WEIGHT': f"./results/classifier/May30/vehicle/last_model.pt",
-    "date": date,
+    'WEIGHT': f"./results/classifier/May31/vehicle/best_model.pt",
     "type": "vehicle",
     'output_type': 'one_hot',
     'class_map': {
@@ -50,7 +73,6 @@ cfg_veh.update({
 cfg_col.update({
     'NUM_CLASSES': 8,
     'WEIGHT': "./results/col_classifier.pt",
-    "date": date,
     "type": "color",
     'output_type': 'one_hot',
     'class_map': {
@@ -64,3 +86,12 @@ cfg_col.update({
         7: 'white',
     }
 })
+
+def setup_cfg(cfg):
+    cfg['loss']['args']['num_steps'] = cfg['train']['batch_size']*cfg['train']['num_epochs']
+    cfg['loss']['args']['num_classes'] = cfg['NUM_CLASSES']
+    pass
+
+if CONFIG['loss']['name'] == 'TSA_BceDiceLoss':
+    setup_cfg(cfg_veh)
+    setup_cfg(cfg_col)
