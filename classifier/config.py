@@ -51,7 +51,7 @@ cfg_col = CONFIG.copy()
 
 cfg_veh.update({
     'NUM_CLASSES': 6,
-    'WEIGHT': f"./results/classifier/May31/vehicle/best_model.pt",
+    'WEIGHT': f"./results/classifier/May31_uptrain/vehicle/best_model.pt",
     "type": "vehicle",
     'output_type': 'one_hot',
     'class_map': {

@@ -18,6 +18,8 @@ class FollowState:
     }
     pass
 
+NUM_COUNT_THRES = 9
+
 class Counter(object):
     def __init__(self):
         self.counter = {}
@@ -39,7 +41,23 @@ class Counter(object):
         self.total += 1
     
     def get_famous_value(self):
-        return self.famous_value
+        a_fl_b = self.counter.get(FollowState.A_FOLLOW_B, None)
+        b_fl_a = self.counter.get(FollowState.B_FOLLOW_A, None)
+        if a_fl_b is None and b_fl_a is None:
+            return FollowState.NO_RELATION
+        elif a_fl_b is None:
+            if b_fl_a >= NUM_COUNT_THRES:
+                return FollowState.B_FOLLOW_A
+            return FollowState.NO_RELATION
+        elif b_fl_a is None:
+            if a_fl_b >= NUM_COUNT_THRES:
+                return FollowState.A_FOLLOW_B
+            return FollowState.NO_RELATION
+        else:
+            if a_fl_b >= b_fl_a:
+                return FollowState.A_FOLLOW_B
+            return FollowState.A_FOLLOW_B
+        # return self.famous_value
         
     pass
 
