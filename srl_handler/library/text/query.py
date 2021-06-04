@@ -2,10 +2,10 @@ import os, json
 import os.path as osp 
 
 from .caption import Caption
-from utils.common import (
+from srl_handler.utils.common import (
     refine_list_colors, refine_list_subjects
 )
-from utils.constant import (
+from srl_handler.utils.constant import (
     VEHICLE_VOCAB
 )
 

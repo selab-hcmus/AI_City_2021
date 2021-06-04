@@ -20,7 +20,7 @@ from object_tracking.test.test_utils import (
     a_substract_b, is_miss_frame, get_miss_frame_tracks, calculate_iou, calculate_distance,
     SAVE_DIR
 )
-from object_tracking.test.evaluate_subject import evaluate, TRAIN_SVO_IDS
+from object_tracking.test.evaluate_subject import evaluate, eda_score_dict, TRAIN_SVO_IDS
 from object_tracking.tools import visualize, visualize_subject
 from object_tracking.deep_sort.iou_matching import iou
 from object_tracking.utils import TRAIN_TRACKING_RESULT, TEST_TRACKING_RESULT
@@ -76,10 +76,11 @@ def get_top_nearest_tracks(key: str, vid_data: VideoResult, label_boxes: list, t
 
     return [i[0] for i in final_results]
 
-label_dict = json_load(TRAIN_TRACK_ORDER_JSON)
-def check_track_subject(save_dir: str=SAVE_DIR, json_dir: str=TRAIN_TRACKING_RESULT,
+# label_dict = json_load(TRAIN_TRACK_ORDER_JSON) # Use to load groundtruth boxes
+label_dict = json_load(TEST_TRACK_ORDER_JSON) # Use to load groundtruth boxes
+def check_track_subject(save_dir: str, vid_save_dir: str, json_dir: str=TRAIN_TRACKING_RESULT,
                         visualize=False, json=True):
-    ambiguous_track = {}
+
     list_keys = []
     for fname in os.listdir(json_dir):
         key = fname.split('.')[0]
@@ -90,10 +91,13 @@ def check_track_subject(save_dir: str=SAVE_DIR, json_dir: str=TRAIN_TRACKING_RES
         print(f'Found no tracking result in {json_dir}')
         return
 
+    eda_score = {
+        ''
+    }
     print(f'Start finding main subject track')
     total_score_dict = {}
     for i in tqdm(list_keys):
-        save_path = osp.join(save_dir, f'{i}.avi')
+        save_path = osp.join(vid_save_dir, f'{i}.avi')
         vid_json = osp.join(json_dir, f'{i}.json')
         vid_data = VideoResult(vid_json)
         raw_vid_data = json_load(vid_json)
@@ -105,27 +109,58 @@ def check_track_subject(save_dir: str=SAVE_DIR, json_dir: str=TRAIN_TRACKING_RES
         top_longest_track_ids = get_top_nearest_tracks(i, vid_data, subject_boxes, top_k=5)
         score_dict = evaluate(subject_boxes, [vid_data.track_map[i] for i in top_longest_track_ids])
         total_score_dict[i] = score_dict
-        # if len(top_longest_track_ids) > 1:
-        #     ambiguous_track[i] = len(top_longest_track_ids)
-        #     pass
 
         if visualize and (not osp.isfile(save_path)):
             visualize_subject(raw_vid_data, top_longest_track_ids, DATA_DIR, save_path, subject_boxes)
     
     if json:
-        fail_path = osp.join(save_dir, 'evaluate.json')
+        fail_path = osp.join(save_dir, 'all_score_dict.json')
         json_save(total_score_dict, fail_path)
-    pass
+    
+    return total_score_dict
 
 if __name__ == '__main__':
-    exp_id = 'deepsort_v4-1'
-    sub_id = 'v1'
-    vid_save_dir = osp.join(SAVE_DIR, exp_id, f'video_sub-{sub_id}')
+    exp_id = 'test_deepsort_v4-1'
+    sub_id = 'subject_v1'
+
+    track_dir = osp.join(SAVE_DIR, exp_id)
+    save_dir = osp.join(track_dir, sub_id)
+    vid_save_dir = osp.join(save_dir, 'video')
+    vid_fail_dir = osp.join(save_dir, 'video_fail')
+    
     os.makedirs(vid_save_dir, exist_ok=True)
+    os.makedirs(vid_fail_dir, exist_ok=True)
+
     print(f'Find subject for {exp_id}')
-    check_track_subject(
-        save_dir=vid_save_dir, json_dir=osp.join(SAVE_DIR, exp_id, 'json'),
-        visualize=False, json=True
+    total_score_dict = check_track_subject(
+        save_dir=save_dir, vid_save_dir=vid_save_dir, json_dir=osp.join(track_dir, 'json'),
+        visualize=False, json=False
     )
+    total_score_dict = json_load('results_exp/test_deepsort_v4-1/subject_v1/all_score_dict.json')
+    df_score, list_csv = eda_score_dict(total_score_dict)
+    print(df_score['is_perfect'].value_counts())
+    
+    old_json_dir = 'results_exp/test_deepsort_v4-1/json'
+    new_json_dir = 'results_exp/test_deepsort_v4-1/json_subject'
+    os.makedirs(new_json_dir, exist_ok=True)
+    for sample in list_csv:
+        json_path = osp.join(old_json_dir, f"{sample['track_id']}.json")
+        data = json_load(json_path)
+        if sample['is_perfect'] == True:    
+            best_track_id = sample['best_tracks'][0]
+            data['subject'] = best_track_id
+        else:
+            data['subject'] = None
+        json_save(data, osp.join(new_json_dir, f"{sample['track_id']}.json"))
+        pass
+    # fail_ids = df_score[df_score['is_perfect'] == False]['track_id'].values.tolist()
+    # fail_ids.sort()
+    # for i in fail_ids:
+    #     shutil.copyfile(
+    #         src = osp.join(vid_save_dir, f'{i}.avi'),
+    #         dst = osp.join(vid_fail_dir, f'{i}.avi')
+    #     )
+    # df_score.to_csv(osp.join(save_dir, 'eval_score.csv'), index=False)
+
     pass
 

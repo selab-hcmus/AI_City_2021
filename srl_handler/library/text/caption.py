@@ -6,7 +6,7 @@ from .vehicle import Vehicle
 from .text_utils import (
     get_color, refine_srl_args, get_args_from_srl_sample, extract_noun_phrase
 )
-from utils.constant import (
+from srl_handler.utils.constant import (
     VEHICLE_VOCAB, COLOR_VOCAB, ACTION_VOCAB
 )
 

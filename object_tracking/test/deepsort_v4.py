@@ -6,6 +6,7 @@ from tqdm import tqdm
 import numpy as np
 
 from utils import json_load, json_save, pickle_load, pickle_save
+from dataset.data_manager import TEST_TRACK_JSON, test_track_map
 from object_tracking.utils import (
     ROOT_DIR,
     TRAIN_TRACK_DIR, TEST_TRACK_DIR, VEHCOL_FEAT_DIR, REID_FEAT_DIR,
@@ -16,14 +17,7 @@ from object_tracking.test.test_utils import SAVE_DIR, ID_TO_COMPARE
 from object_tracking.test.evaluate_subject import TRAIN_SVO_IDS
 from object_tracking.deepsort_feat import deepsort_rbc
 
-save_dir = osp.join(SAVE_DIR, 'deepsort_v4-1')
-save_json_dir = osp.join(save_dir, 'json')
-save_vis_dir = osp.join(save_dir, 'video')
-print(f'Save exp results to {save_dir}')
-os.makedirs(save_dir, exist_ok=True)
-os.makedirs(save_json_dir, exist_ok=True)
-os.makedirs(save_vis_dir, exist_ok=True)
-
+TEST_TRACK_ORDERS = list(test_track_map.values())
 
 def concat_feat(vehcol_feats: list, reid_feats: list):
     new_feats = []
@@ -32,23 +26,20 @@ def concat_feat(vehcol_feats: list, reid_feats: list):
 
     return new_feats
 
-TOP_BOX = 15
 def tracking(config: dict, json_save_dir: str, vis_save_dir: str, verbose=False):
     mode_json_dir = json_save_dir
     gt_dict = json_load(config["track_dir"])
     print(f'>> Run DeepSort on {config["mode"]} mode, save result to {mode_json_dir}')
 
-    for track_order in tqdm(TRAIN_SVO_IDS):
+    for track_order in tqdm(config["list_keys"]):
         track_order = str(track_order)
         if verbose:
             print(f'tracking order {track_order}')
         img_dict = gt_dict[track_order]
         img_names = get_img_name(img_dict)
         
-        vehcol_feat_path = osp.join(VEHCOL_FEAT_DIR, f'{track_order}.pkl')
-        reid_feat_path = osp.join(REID_FEAT_DIR, f'{track_order}.pkl')
-        vehcol_feat = pickle_load(vehcol_feat_path)
-        reid_feat = pickle_load(reid_feat_path)
+        feat_path = osp.join(config['feat_dir'], f'{track_order}.pkl')
+        feat_map = pickle_load(feat_path)
 
         ans = {}
         #Initialize deep sort.
@@ -74,10 +65,10 @@ def tracking(config: dict, json_save_dir: str, vis_save_dir: str, verbose=False)
             out_scores = np.array(out_scores)
             
             # vehcol_features = vehcol_feat[img_names[i]]
-            reid_features = reid_feat[img_names[i]]
+            # reid_features = feat_map[img_names[i]]
             # new_feats = concat_feat(vehcol_features, reid_features)
 
-            features = reid_features
+            features = feat_map[img_names[i]]
             # if len(features) > TOP_BOX:
             #     detections = detections[:TOP_BOX]
             #     out_scores = out_scores[:TOP_BOX]
@@ -130,11 +121,32 @@ def tracking(config: dict, json_save_dir: str, vis_save_dir: str, verbose=False)
 
 if __name__ == '__main__':
     config = {
-        "train_total": {
-            "track_dir": TRAIN_TRACK_DIR,
-            "mode": "train_total",
-            "save_video": False,
+        # "train_total": {
+        #     "track_dir": TRAIN_TRACK_DIR,
+        #     "mode": "train_total",
+        #     "save_video": False,
+        #     "save_feat": False,
+        # },
+        "test": {
+            "track_dir": TEST_TRACK_DIR,
+            "feat_dir": "reid/results/test_feat_tracking",
+            "save_video": True,
             "save_feat": False,
-        },
+            "mode": 'test',
+            "list_keys": TEST_TRACK_ORDERS,
+        }
     }
-    tracking(config['train_total'], save_json_dir, save_vis_dir, verbose=False)
+
+    for mode in config:            
+        exp_name = f'{mode}_deepsort_v4-1'
+        save_dir = osp.join(SAVE_DIR, exp_name)
+        save_json_dir = osp.join(save_dir, 'json')
+        save_vis_dir = osp.join(save_dir, 'video')
+
+        print(f'[{exp_name}]: Save tracking exp results to {save_dir}')
+        os.makedirs(save_dir, exist_ok=True)
+        os.makedirs(save_json_dir, exist_ok=True)
+        os.makedirs(save_vis_dir, exist_ok=True)
+
+        json_save(config[mode], osp.join(save_dir, 'config.json'))
+        tracking(config[mode], save_json_dir, save_vis_dir, verbose=False)

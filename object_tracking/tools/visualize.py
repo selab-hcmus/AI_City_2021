@@ -14,13 +14,18 @@ def visualize_subject(
     for frame_name in json_data['list_frames']:
         cv_frame = cv2.imread(osp.join(data_dir, frame_name))
         list_frames.append(cv_frame)
-        pass
+        
     
     vid_height, vid_width, _ = list_frames[0].shape
     if list_track_ids == None:
         list_track_ids = list(json_data['track_map'].keys())
+        if json_data['subject'] is not None:
+            list_track_ids.remove(json_data['subject'])
+        pass
     
     for i, cv_frame in enumerate(list_frames):
+        if i == len(subject_boxes):
+            break
         bbox = subject_boxes[i]
         cv2.rectangle(cv_frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),RED, 2)
         cv2.putText(cv_frame, 'sb',(int(bbox[0]), int(bbox[1])),0, 5e-3 * 200, RED,2)
