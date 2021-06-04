@@ -1,15 +1,10 @@
 import sys
 sys.path.append('./EfficientNet-PyTorch')
-from utils import preprocess_input
+# from classifier.utils import preprocess_input
 import torch 
 from torch import nn 
 from torchvision import transforms
-
 from efficientnet_pytorch import EfficientNet
-import PIL
-IMAGE_SIZE = (224,224)
-MEAN = [0.485, 0.456, 0.406]
-STD = [0.229, 0.224, 0.225]
 
 class BoxClassifier(nn.Module):
     def __init__(self, cfg):
@@ -81,6 +76,8 @@ def init_model(cfg_veh, cfg_col, load_ckpt=True, eval=False):
     if load_ckpt:
         veh_weight = cfg_veh['WEIGHT']
         col_weight = cfg_col['WEIGHT']
+        print(f'load veh weight from {veh_weight}')
+        print(f'load col weight from {col_weight}')
 
         veh_model.load_state_dict(get_state_dict(veh_weight)) 
         col_model.load_state_dict(get_state_dict(col_weight))    
