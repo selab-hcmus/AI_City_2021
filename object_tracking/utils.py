@@ -7,6 +7,7 @@ from object_tracking.deep_sort.iou_matching import iou
 
 TRAIN_TRACK_DIR = "/home/ntphat/projects/AI_City_2021/classifier/data/Centernet2_train_veh_order.json"
 TEST_TRACK_DIR = "/home/ntphat/projects/AI_City_2021/classifier/data/Centernet2_test_veh_order.json"
+
 VEHCOL_FEAT_DIR = "/home/ntphat/projects/AI_City_2021/classifier/results/train_feat_tracking"
 REID_FEAT_DIR = "reid/results/train_feat_tracking"
 ROOT_DIR = '/home/ntphat/projects/AI_City_2021/dataset'

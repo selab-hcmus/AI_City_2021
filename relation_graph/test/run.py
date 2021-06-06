@@ -14,18 +14,19 @@ from utils import (
 )
 import pandas as pd
 
+from dataset.data_manager import DATA_DIR
 from object_tracking.tools.visualize import visualize
-
-VELOCITY_SKIP_FRAME = 4
-VELOCITY_COSINE_THRES = math.cos(math.pi/18)
-DISTANCE_COSINE_THRES = math.cos(math.pi/18)
+from relation_graph.config import (
+    VELOCITY_SKIP_FRAME, VELOCITY_COSINE_THRES, DISTANCE_COSINE_THRES
+)
 
 TRAIN_TRACKING_RESULT = '../object_tracking/results_exp/test_deepsort_v4-1/json_subject'
 TEST_TRACKING_RESULT = '../object_tracking/results/annotate_time_test'
 
-SAVE_DIR_CSV = './results'
-SAVE_DIR_VIDEO = './results/visualize'
-DATA_DIR = '../dataset'
+EXP_ID = 'relation_v1'
+SAVE_DIR = osp.join('./results', EXP_ID)
+SAVE_DIR_CSV = SAVE_DIR
+SAVE_DIR_VIDEO = osp.join(SAVE_DIR, visualize) #'./results/visualize'
 
 def get_potential_track(track_dir: str):
     ans = []

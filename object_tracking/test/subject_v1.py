@@ -16,8 +16,6 @@ from dataset.data_manager import (
 from utils import (
     AverageMeter, xyxy_to_xywh, xywh_to_xyxy, json_save, json_load
 )
-print(sys.path)
-print(AverageMeter)
 from object_tracking.test.test_utils import (
     a_substract_b, is_miss_frame, get_miss_frame_tracks, calculate_iou, calculate_distance,
     SAVE_DIR
@@ -93,9 +91,6 @@ def check_track_subject(save_dir: str, vid_save_dir: str, json_dir: str=TRAIN_TR
         print(f'Found no tracking result in {json_dir}')
         return
 
-    eda_score = {
-        ''
-    }
     print(f'Start finding main subject track')
     total_score_dict = {}
     for i in tqdm(list_keys):
@@ -122,7 +117,7 @@ def check_track_subject(save_dir: str, vid_save_dir: str, json_dir: str=TRAIN_TR
     return total_score_dict
 
 def main():
-    exp_id = 'test_deepsort_v4-1'
+    exp_id = 'test_deepsort_v4-2'
     sub_id = 'subject_v1'
 
     track_dir = osp.join(SAVE_DIR, exp_id)
@@ -136,14 +131,13 @@ def main():
     print(f'Find subject for {exp_id}')
     total_score_dict = check_track_subject(
         save_dir=save_dir, vid_save_dir=vid_save_dir, json_dir=osp.join(track_dir, 'json'),
-        visualize=False, json=False
+        visualize=True, json=True
     )
-    total_score_dict = json_load('results_exp/test_deepsort_v4-1/subject_v1/all_score_dict.json')
     df_score, list_csv = eda_score_dict(total_score_dict)
     print(df_score['is_perfect'].value_counts())
     
-    old_json_dir = 'results_exp/test_deepsort_v4-1/json'
-    new_json_dir = 'results_exp/test_deepsort_v4-1/json_subject'
+    old_json_dir = f'results_exp/{exp_id}/json'
+    new_json_dir = f'results_exp/{exp_id}/json_subject'
     os.makedirs(new_json_dir, exist_ok=True)
     for sample in list_csv:
         json_path = osp.join(old_json_dir, f"{sample['track_id']}.json")
@@ -157,17 +151,17 @@ def main():
         pass
 
 
-    # fail_ids = df_score[df_score['is_perfect'] == False]['track_id'].values.tolist()
-    # fail_ids.sort()
-    # for i in fail_ids:
-    #     shutil.copyfile(
-    #         src = osp.join(vid_save_dir, f'{i}.avi'),
-    #         dst = osp.join(vid_fail_dir, f'{i}.avi')
-    #     )
-    # df_score.to_csv(osp.join(save_dir, 'eval_score.csv'), index=False)
+    fail_ids = df_score[df_score['is_perfect'] == False]['track_id'].values.tolist()
+    fail_ids.sort()
+    for i in fail_ids:
+        shutil.copyfile(
+            src = osp.join(vid_save_dir, f'{i}.avi'),
+            dst = osp.join(vid_fail_dir, f'{i}.avi')
+        )
+    df_score.to_csv(osp.join(save_dir, 'eval_score.csv'), index=False)
 
     pass
 
 if __name__ == '__main__':
-    # main()
-    pass
+    main()
+    

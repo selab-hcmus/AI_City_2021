@@ -38,8 +38,10 @@ def tracking(config: dict, json_save_dir: str, vis_save_dir: str, verbose=False)
         img_dict = gt_dict[track_order]
         img_names = get_img_name(img_dict)
         
-        feat_path = osp.join(config['feat_dir'], f'{track_order}.pkl')
-        feat_map = pickle_load(feat_path)
+        feat_path = osp.join(config['feat_dir'][0], f'{track_order}.pkl')
+        reid_feat = pickle_load(feat_path)
+        vehcol_path = osp.join(config['feat_dir'][1], f'{track_order}.pkl')
+        vehcol_feat = pickle_load(vehcol_path)
 
         ans = {}
         #Initialize deep sort.
@@ -64,11 +66,11 @@ def tracking(config: dict, json_save_dir: str, vis_save_dir: str, verbose=False)
             detections = np.array(detections)
             out_scores = np.array(out_scores)
             
-            # vehcol_features = vehcol_feat[img_names[i]]
-            # reid_features = feat_map[img_names[i]]
-            # new_feats = concat_feat(vehcol_features, reid_features)
-
-            features = feat_map[img_names[i]]
+            vehcol_features = vehcol_feat[img_names[i]]
+            reid_features = reid_feat[img_names[i]]
+            new_feats = concat_feat(vehcol_features, reid_features)
+            features = new_feats
+            # features = feat_map[img_names[i]]
             # if len(features) > TOP_BOX:
             #     detections = detections[:TOP_BOX]
             #     out_scores = out_scores[:TOP_BOX]
@@ -129,7 +131,7 @@ if __name__ == '__main__':
         # },
         "test": {
             "track_dir": TEST_TRACK_DIR,
-            "feat_dir": "reid/results/test_feat_tracking",
+            "feat_dir": ["reid/results/test_feat_tracking", "/home/ntphat/projects/AI_City_2021/classifier/results/May31_uptrain/test_feat_tracking"],
             "save_video": True,
             "save_feat": False,
             "mode": 'test',
@@ -138,7 +140,7 @@ if __name__ == '__main__':
     }
 
     for mode in config:            
-        exp_name = f'{mode}_deepsort_v4-1'
+        exp_name = f'{mode}_deepsort_v4-2'
         save_dir = osp.join(SAVE_DIR, exp_name)
         save_json_dir = osp.join(save_dir, 'json')
         save_vis_dir = osp.join(save_dir, 'video')

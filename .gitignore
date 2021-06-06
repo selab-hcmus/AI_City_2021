@@ -36,7 +36,8 @@ object_tracking/reid/results/*
 
 
 # Relation graph
-relation_graph/* 
+relation_graph/data
+relation_graph/results
 relation_graph/*.avi
 
 slurm*

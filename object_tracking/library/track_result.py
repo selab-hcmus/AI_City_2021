@@ -46,7 +46,10 @@ class VideoResult(object):
         self.frame_ids = data['frame_ids']
         self.n_tracks = data['n_tracks']
         self.track_map = {}
+
         self.subject = None
+        if data.get('subject') is not None:
+            self.subject = data['subject']
         
         # Init track result
         for track_id, track_info in data['track_map'].items():
