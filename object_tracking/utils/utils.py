@@ -70,37 +70,3 @@ def json_dump(data: dict, save_path: str):
         json.dump(data, f, indent=2)
     pass
 
-
-# def scan_data(track_keys, gt_dict):
-#     # Check extracted features (exist or not)
-#     fail_col, fail_veh = {}, {}
-
-#     for track_key in tqdm(track_keys):
-#         track_key = os.path.splitext(track_key)[0]
-        
-#         fail_col[track_key], fail_veh[track_key] = [], []
-#         img_dict = gt_dict[track_key]
-#         img_names = get_img_name(img_dict)
-        
-#         veh_path = os.path.join(VEH_DIR, f"{track_key}.pickle")
-#         with open(veh_path, 'rb') as handle:
-#             veh_features = pickle.load(handle)[track_key]
-        
-#         color_path = os.path.join(COLOR_DIR, f'{track_key}.pickle')
-#         with open(color_path, 'rb') as handle:
-#             col_features = pickle.load(handle)[track_key]
-        
-#         for img_name in img_names:
-#             img_col_feat, img_veh_feat = col_features.get(img_name), veh_features.get(img_name)
-#             if img_col_feat is None:
-#                 fail_col[track_key].append(img_name)
-#             if img_veh_feat is None:
-#                 fail_veh[track_key].append(img_name)
-
-#     col_fail_save_path = osp.join(SAVE_JSON_DIR, 'fail_col_feats.json')
-#     veh_fail_save_path = osp.join(SAVE_JSON_DIR, 'fail_veh_feats.json')
-#     json_dump(fail_col, col_fail_save_path)
-#     json_dump(fail_veh, veh_fail_save_path)
-#     print_fail_dict(fail_col)
-#     print_fail_dict(fail_veh)
-#     pass

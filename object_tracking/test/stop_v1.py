@@ -6,7 +6,8 @@ from utils import json_load, json_save
 from object_tracking.library import VideoResult, TrackResult
 from object_tracking.test.test_utils import SAVE_DIR, calculate_iou, calculate_distance
 track_res_dir = osp.join(SAVE_DIR, 'test_deepsort_v4-1', 'json_subject')
-
+save_dir = osp.join(SAVE_DIR, 'test_deepsort_v4-1', 'json_stop')
+os.makedirs(save_dir)
 
 STOP_IOU_THRES = 0.6
 def is_track_stop(track_data: TrackResult):
@@ -26,13 +27,20 @@ def find_stop_track(video_data: VideoResult):
 
 def main():
     list_files = os.listdir(track_res_dir)
-    list_ids = [407]
-    list_files = [f'{i}.json' for i in list_ids]
+    # list_ids = [407]
+    # list_files = [f'{i}.json' for i in list_ids]
     for fname in tqdm(list_files):
-        vid_data = VideoResult(osp.join(track_res_dir, fname))
+        inp = osp.join(track_res_dir, fname)
+        vid_data = VideoResult(inp)
         stop_tracks = find_stop_track(vid_data)
-        print(f"subject: {vid_data.subject}")
-        print(f'{fname}: {stop_tracks} stop')
+        # print(f"subject: {vid_data.subject}")
+        # print(f'{fname}: {stop_tracks} stop')
+
+        save_path = osp.join(save_dir, fname)
+        old_data = json_load(inp)
+        old_data['stop_tracks'] = stop_tracks
+        json_save(old_data, save_path)
+
         pass
     pass 
 
