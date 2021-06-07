@@ -53,13 +53,15 @@ class TrackResult(object):
 
     def set_veh_class(self, classifier_manager, thres=0.7):
         N = len(self.boxes)
-        weights = np.zeros(N)
-        weights[N//4] = 1
-        weights[2*N//4] = 2
-        weights[3*N//4] = 2
-        weights[N-1] = 1
-        # weights[5*N//6] = 2
-        box_names, self.final_vehicle, _, _ = classifier_manager.get_veh_predictions(self.cv_boxes, thres, weights)
+        ids_to_use = [N//6, 2*N//6, 3*N//6, 4*N//6, 5*N//6]
+        weights = np.ones(len(ids_to_use))
+        weights[0] = 2
+        weights[-1] = 2
+        feed_boxes = []
+        for i in ids_to_use:
+            feed_boxes.append(self.cv_boxes[i])
+
+        box_names, self.final_vehicle, _, _ = classifier_manager.get_veh_predictions(feed_boxes, thres, weights)
         pass 
 
     def get_final_classname(self):
