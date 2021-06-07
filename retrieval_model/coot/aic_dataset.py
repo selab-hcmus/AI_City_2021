@@ -8,12 +8,12 @@ import numpy as np
 import torch as th
 from torch.utils import data as th_data
 
-import coot.configs_retrieval
-from coot.configs_retrieval import RetrievalDatasetConfig
-from coot.features_loader import TextFeaturesLoader, VideoFeatureLoader
-from nntrainer import data as nn_data, data_text, maths, typext, utils, utils_torch
+# import retrieval_model.coot.configs_retrieval
+from retrieval_model.coot.configs_retrieval import RetrievalDatasetConfig
+from retrieval_model.coot.features_loader import TextFeaturesLoader, VideoFeatureLoader
+from retrieval_model.nntrainer import data as nn_data, data_text, maths, typext, utils, utils_torch
 
-from coot.dataset_utils import (
+from retrieval_model.coot.dataset_utils import (
     RetrievalDataPointTuple, RetrievalDataBatchTuple,
     SPLIT_QUERY_IDS, TRAIN_TRACK_JSON
 )

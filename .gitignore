@@ -25,14 +25,14 @@ classifier/results/*
 classifier/notebooks/*
 
 # Object tracking
-object_tracking/ckpts/*
+object_tracking/notebook
 object_tracking/data/*
 object_tracking/results/*
-object_tracking/results_compare/*
-object_tracking/results_exp/*
 object_tracking/results_exp/*
 object_tracking/reid/weights/*
 object_tracking/reid/results/*
+
+# object_tracking/test/*
 
 
 # Relation graph

@@ -2,6 +2,25 @@ import datetime
 import os
 import os.path as osp 
 
+VEH_CLASS_MAP = {
+    0: 'sedan',
+    1: 'suv',
+    2: 'van',
+    3: 'jeep',
+    4: 'pickup',
+    5: 'bus-truck',
+}
+COL_CLASS_MAP = {
+    0: 'gray',
+    1: 'gold',
+    2: 'red',
+    3: 'blue',
+    4: 'black',
+    5: 'purple',
+    6: 'green',
+    7: 'white',
+}
+
 CONFIG = {
     'MODEL': 'efficientnet-b5',
     'NUM_CLASSES': 0,
@@ -51,7 +70,7 @@ cfg_col = CONFIG.copy()
 
 cfg_veh.update({
     'NUM_CLASSES': 6,
-    'WEIGHT': f"./results/classifier/May31_uptrain/vehicle/best_model.pt",
+    'WEIGHT': f"/home/ntphat/projects/AI_City_2021/classifier/results/May31_uptrain/veh_best_model.pt",
     "type": "vehicle",
     'output_type': 'one_hot',
     'class_map': {
@@ -72,7 +91,7 @@ cfg_veh.update({
 
 cfg_col.update({
     'NUM_CLASSES': 8,
-    'WEIGHT': "./results/col_classifier.pt",
+    'WEIGHT': "/home/ntphat/projects/AI_City_2021/classifier/results/col_classifier.pt",
     "type": "color",
     'output_type': 'one_hot',
     'class_map': {

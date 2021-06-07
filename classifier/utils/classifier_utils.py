@@ -8,8 +8,6 @@ import torch
 from torchvision import transforms
 import PIL
 
-from classifier.loss import l2_loss, BceDiceLoss
-from classifier.box_extractor import BoxClassifier
 from utils import AverageMeter
 
 
@@ -25,6 +23,9 @@ val_transform = transforms.Compose([
 ])
 
 def preprocess_input(img):
+    if isinstance(img, np.ndarray):
+        img = Image.fromarray(img)
+
     img = img.convert('RGB')
     img = val_transform(img)
     return img
@@ -164,7 +165,7 @@ def get_feat_from_subject_box(crop, veh_model, col_model):
     return feat
 
 @torch.no_grad()
-def get_feat_from_model(list_crops: list, model: BoxClassifier):
+def get_feat_from_model(list_crops, model):
     list_tensors = [preprocess_input(Image.fromarray(crop).convert('RGB')) for crop in list_crops]
     images = torch.stack(list_tensors, dim=0).cuda()
 

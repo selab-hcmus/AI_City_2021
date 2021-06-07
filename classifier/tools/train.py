@@ -4,24 +4,24 @@ import pandas as pd
 from tqdm.notebook import tqdm
 from glob import glob
 import seaborn as sns 
-import numpy as np
 import matplotlib.pyplot as plt
 import PIL
 from PIL import Image
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import Subset, DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset
 
-from classifier.box_extractor import init_model
-from classifier.config import cfg_veh, cfg_col
-from classifier.dataset import (
+from classifier.library.box_extractor import init_model
+from classifier.utils.config import cfg_veh, cfg_col
+
+from classifier.library.dataset import (
     VehicleDataset, get_dataset,
     VEH_TRAIN_CSV, COL_TRAIN_CSV,
     VEH_GROUP_JSON, COL_GROUP_JSON,
     VEH_BOX_DIR, COL_BOX_DIR,
 ) 
-import classifier.loss
+import classifier.library.loss as loss
 from classifier.utils import scan_data, evaluate_fraction, evaluate_tensor, train_model
 
 UP_TRAIN = cfg_veh['uptrain']
@@ -29,6 +29,7 @@ if UP_TRAIN:
     veh_model, col_model = init_model(cfg_veh, cfg_col, load_ckpt=True, eval=False)
 else:
     veh_model, col_model = init_model(cfg_veh, cfg_col, load_ckpt=False, eval=False)
+
 veh_model = veh_model.cuda()
 col_model = col_model.cuda()
 

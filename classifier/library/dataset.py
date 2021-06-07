@@ -2,26 +2,18 @@ import os, json, cv2
 import os.path as osp 
 import pandas as pd 
 from tqdm.notebook import tqdm
-from glob import glob
-import seaborn as sns 
 import numpy as np
-import matplotlib.pyplot as plt
 import PIL
 from PIL import Image
 
 import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.optim import lr_scheduler
-from torch.utils.data import Subset, DataLoader, Dataset
+from torch.utils.data import Dataset
 
-import torchvision
-from torchvision import datasets, models, transforms
-from torchvision.datasets import ImageFolder
+from torchvision import transforms
 from sklearn.model_selection import StratifiedKFold
 
 from efficientnet_pytorch import EfficientNet
-from config import CONFIG
+from classifier.utils.config import CONFIG
 
 VEH_TRAIN_CSV = '../srl_handler/results/veh_train_fraction_new_edited29May.csv'
 VEH_GROUP_JSON = '../srl_handler/data/vehicle_group_v1.json'

@@ -1,10 +1,15 @@
 import sys
-sys.path.append('./EfficientNet-PyTorch')
+# sys.path.append('./EfficientNet-PyTorch')
 # from classifier.utils import preprocess_input
+import numpy as np
+
 import torch 
 from torch import nn 
 from torchvision import transforms
-from efficientnet_pytorch import EfficientNet
+
+from classifier.EfficientNet_PyTorch.efficientnet_pytorch import EfficientNet
+# from efficientnet_pytorch import EfficientNet
+from classifier.utils import preprocess_input
 
 class BoxClassifier(nn.Module):
     def __init__(self, cfg):
@@ -45,6 +50,12 @@ class BoxClassifier(nn.Module):
         logits = self.logit_activation(logits)
 
         return logits
+
+    def predict(self, images: list):
+        list_boxes = [preprocess_input(img) for img in images]
+        inp = torch.stack(list_boxes, dim=0).cuda()
+        preds = self.forward(inp).detach().cpu().numpy()
+        return preds
     pass
 
 class VehicleClassifier(BoxClassifier):

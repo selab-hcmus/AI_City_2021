@@ -8,18 +8,18 @@ import torch
 from torch.cuda.amp import autocast
 from torch import nn
 
-from coot import arguments_coot
-from coot.configs_retrieval import ExperimentTypesConst, RetrievalConfig as Config
-from coot.aic_dataset import create_retrieval_datasets_and_loaders
-from coot.test_dataset import VideoDataset, TextDataset
-from coot.model_retrieval import RetrievalModelManager as ModelManager
-from coot.trainer_retrieval import RetrievalTrainer as Trainer
+from retrieval_model.coot import arguments_coot
+from retrieval_model.coot.configs_retrieval import ExperimentTypesConst, RetrievalConfig as Config
+from retrieval_model.coot.aic_dataset import create_retrieval_datasets_and_loaders
+from retrieval_model.coot.test_dataset import VideoDataset, TextDataset
+from retrieval_model.coot.model_retrieval import RetrievalModelManager as ModelManager
+from retrieval_model.coot.trainer_retrieval import RetrievalTrainer as Trainer
 
-from nntrainer import arguments, utils
-from nntrainer.utils_torch import set_seed
-from nntrainer.utils_yaml import load_yaml_config_file
-from nntrainer import data as nn_data, data_text, maths, typext, utils, utils_torch
-from nntrainer import retrieval
+from retrieval_model.nntrainer import arguments, utils
+from retrieval_model.nntrainer.utils_torch import set_seed
+from retrieval_model.nntrainer.utils_yaml import load_yaml_config_file
+from retrieval_model.nntrainer import data as nn_data, data_text, maths, typext, utils, utils_torch
+from retrieval_model.nntrainer import retrieval
 
 
 EXP_TYPE = ExperimentTypesConst.RETRIEVAL
@@ -239,7 +239,6 @@ def inference_on_test():
     print(f'vid_emb_mat shape: {vid_emb_mat.shape}')
     par2vid_sim = np.dot(par_emb_mat, vid_emb_mat.T)
     vid_keys = list(video_collector.keys())
-    topK = 50
     result = {}
     for i, key in tqdm(enumerate(text_collector.keys())):
         inds = np.argsort(par2vid_sim[i])[::-1]

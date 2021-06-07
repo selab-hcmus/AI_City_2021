@@ -356,10 +356,10 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         # find field which determines whether this is a new best epoch
         val_score = sum_vp_at_1
         
-        # if res_p2v['mrr'] > self.best_mrr:
-        #     print(f"[PHAT] Achieve best MRR, before: {self.best_mrr:.04f}, after: {res_p2v['mrr']:.04f}")
-        #     self.phat_save_model('mrr')
-        #     self.best_mrr = res_p2v['mrr']
+        if res_p2v['mrr'] > self.best_mrr:
+            print(f"[PHAT] Achieve best MRR, before: {self.best_mrr:.04f}, after: {res_p2v['mrr']:.04f}")
+            self.phat_save_model('mrr')
+            self.best_mrr = res_p2v['mrr']
 
         if res_p2v['r1'] > self.best_p2v_r1:
             print(f"[PHAT] Achieve best p2v R@1, before: {self.best_p2v_r1:.04f}, after: {res_p2v['r1']:.04f}")

@@ -3,13 +3,12 @@ import torch
 import os
 import os.path as osp 
 from PIL import Image, ImageFont, ImageDraw 
-from config import cfg_veh, cfg_col
 import pandas as pd
-
-from box_extractor import init_model
-from utils import preprocess_input
-from config import cfg_veh, cfg_col
 from ast import literal_eval
+
+from classifier.library.box_extractor import init_model
+from classifier.utils import preprocess_input
+from classifier.utils.config import cfg_veh, cfg_col
 
 def label_prediction(model, img_path):
     img = Image.open(img_path).convert('RGB')
