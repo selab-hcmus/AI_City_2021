@@ -68,8 +68,8 @@ def parse_file(filepath, regex_mAP, regex_r1, regex_r5, regex_r10, regex_r20):
 
 def main(args):
     regex_mAP = re.compile(r'mAP: ([.\deE+-]+)%')
-    regex_r1 = re.compile(r'Rank-1  : ([.\deE+-]+)%')
-    regex_r5 = re.compile(r'Rank-5  : ([.\deE+-]+)%')
+    regex_r1 = re.compile(r'Rank-1 {2}: ([.\deE+-]+)%')
+    regex_r5 = re.compile(r'Rank-5 {2}: ([.\deE+-]+)%')
     regex_r10 = re.compile(r'Rank-10 : ([.\deE+-]+)%')
     regex_r20 = re.compile(r'Rank-20 : ([.\deE+-]+)%')
 
