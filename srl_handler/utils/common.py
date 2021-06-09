@@ -84,7 +84,7 @@ def refine_list_colors(list_colors, unique=True):
     """
     new_list = []
     new_list = remove_redundant_colors(list_colors)
-    if (is_list_in_list(new_list, ['light_gray'])):
+    if is_list_in_list(new_list, ['light_gray']):
         new_list = new_list.remove('light_gray')
         if new_list is None or len(new_list) == 0:
             new_list = ['gray']
@@ -92,7 +92,7 @@ def refine_list_colors(list_colors, unique=True):
             new_list.append('gray')
         
 
-    if (is_list_in_list(new_list, ['dark_gray'])):
+    if is_list_in_list(new_list, ['dark_gray']):
         new_list = new_list.remove('dark_gray')
         if new_list is None or len(new_list) == 0:
             new_list = ['gray']
@@ -124,7 +124,7 @@ def refine_list_subjects(list_subjects, unique=True, is_subject=True):
         
         # 3. Handle ambiguous annotations
         # [SUV, bus-truck] = [bus-truck]
-        if (is_list_in_list(new_list, ['suv', 'bus-truck'])):
+        if is_list_in_list(new_list, ['suv', 'bus-truck']):
             new_list = ['suv', 'pickup']
 
         # [jeep, SUV, ...] = [Jeep, SUV]
@@ -142,7 +142,7 @@ def refine_list_subjects(list_subjects, unique=True, is_subject=True):
             new_list = ['suv', 'van']
 
         # [pickup, truck] = [pickup]
-        elif (is_list_in_list(new_list, ['pickup', 'bus-truck'])):
+        elif is_list_in_list(new_list, ['pickup', 'bus-truck']):
             new_list = ['pickup']
 
         # [pickup, sedan, suv] = [pickup, suv]

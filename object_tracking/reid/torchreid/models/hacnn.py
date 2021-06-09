@@ -402,7 +402,7 @@ class HACNN(nn.Module):
 
         if self.loss == 'softmax':
             if self.learn_region:
-                return (prelogits_global, prelogits_local)
+                return prelogits_global, prelogits_local
             else:
                 return prelogits_global
 

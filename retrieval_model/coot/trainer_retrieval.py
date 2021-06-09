@@ -100,7 +100,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         return self.loss_contr(visual_emb, text_emb)
 
     def compute_cluster_loss(self, visual_emb: th.Tensor, text_emb: th.Tensor) -> th.Tensor:
-        return (self.loss_contr(visual_emb, visual_emb))
+        return self.loss_contr(visual_emb, visual_emb)
         # return (self.loss_contr(visual_emb, visual_emb) + self.loss_contr(text_emb, text_emb)) / 2
 
     def compute_total_constrastive_loss(self, visual_data: model_retrieval.RetrievalVisualEmbTuple,

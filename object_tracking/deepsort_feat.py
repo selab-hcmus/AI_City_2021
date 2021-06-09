@@ -7,7 +7,7 @@ from object_tracking.deep_sort_feat.detection import Detection
 import numpy as np
 
 
-class deepsort_rbc():
+class deepsort_rbc:
 	def __init__(self):
 		self.metric = nn_matching.NearestNeighborDistanceMetric("cosine",.4 , 70)
 		self.tracker= Tracker(self.metric)

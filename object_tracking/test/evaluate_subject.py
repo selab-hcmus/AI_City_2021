@@ -42,7 +42,7 @@ def evaluate(gt_boxes: list, cand_tracks: list):
             # if track.track_id == '400':
             dist = calculate_distance(gt_box, track_box)
             
-            if (iou > ACCEPT_IOU_THRES): #or (inside == True):
+            if iou > ACCEPT_IOU_THRES: #or (inside == True):
                 if start_frame == -1:
                     start_frame = frame_idx
                 end_frame = frame_idx
