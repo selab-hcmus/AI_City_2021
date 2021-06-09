@@ -61,13 +61,17 @@ class FeatureExtractor(object):
         model_name='',
         model_path='',
         image_size=(256, 128),
-        pixel_mean=[0.485, 0.456, 0.406],
-        pixel_std=[0.229, 0.224, 0.225],
+            pixel_mean=None,
+            pixel_std=None,
         pixel_norm=True,
         device='cuda',
         verbose=True
     ):
         # Build model
+        if pixel_mean is None:
+            pixel_mean = [0.485, 0.456, 0.406]
+        if pixel_std is None:
+            pixel_std = [0.229, 0.224, 0.225]
         model = build_model(
             model_name,
             num_classes=1,

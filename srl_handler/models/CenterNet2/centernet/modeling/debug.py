@@ -139,7 +139,7 @@ def debug_train(
 
 
 def debug_test(
-    images, logits_pred, reg_pred, agn_hm_pred=[], preds=[], 
+    images, logits_pred, reg_pred, agn_hm_pred=None, preds=None,
     vis_thresh=0.3, debug_show_name=False, mult_agn=False):
     '''
     images: N x 3 x H x W
@@ -147,6 +147,10 @@ def debug_test(
     cat_agn_heatmap: LNHiWi
     shapes_per_level: L x 2 [(H_i, W_i)]
     '''
+    if agn_hm_pred is None:
+        agn_hm_pred = []
+    if preds is None:
+        preds = []
     N = len(images)
     for i in range(len(images)):
         image = images[i].detach().cpu().numpy().transpose(1, 2, 0)

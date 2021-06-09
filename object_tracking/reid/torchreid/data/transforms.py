@@ -71,8 +71,10 @@ class RandomErasing(object):
         sl=0.02,
         sh=0.4,
         r1=0.3,
-        mean=[0.4914, 0.4822, 0.4465]
+            mean=None
     ):
+        if mean is None:
+            mean = [0.4914, 0.4822, 0.4465]
         self.probability = probability
         self.mean = mean
         self.sl = sl
@@ -234,8 +236,8 @@ def build_transforms(
     height,
     width,
     transforms='random_flip',
-    norm_mean=[0.485, 0.456, 0.406],
-    norm_std=[0.229, 0.224, 0.225],
+        norm_mean=None,
+        norm_std=None,
     **kwargs
 ):
     """Builds train and test transform functions.
@@ -249,6 +251,10 @@ def build_transforms(
         norm_std (list or None, optional): normalization standard deviation values. Default is
             ImageNet standard deviation values.
     """
+    if norm_mean is None:
+        norm_mean = [0.485, 0.456, 0.406]
+    if norm_std is None:
+        norm_std = [0.229, 0.224, 0.225]
     if transforms is None:
         transforms = []
 

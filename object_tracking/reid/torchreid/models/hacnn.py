@@ -211,13 +211,15 @@ class HACNN(nn.Module):
         self,
         num_classes,
         loss='softmax',
-        nchannels=[128, 256, 384],
+            nchannels=None,
         feat_dim=512,
         learn_region=True,
         use_gpu=True,
         **kwargs
     ):
         super(HACNN, self).__init__()
+        if nchannels is None:
+            nchannels = [128, 256, 384]
         self.loss = loss
         self.learn_region = learn_region
         self.use_gpu = use_gpu
