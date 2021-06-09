@@ -6,7 +6,7 @@ from object_tracking.deep_sort.detection import Detection
 import numpy as np
 
 
-class deepsort_rbc():
+class deepsort_rbc:
 	def __init__(self):
 		self.metric = nn_matching.NearestNeighborDistanceMetric("cosine",.5 , 70)
 		self.tracker= Tracker(self.metric)
@@ -17,7 +17,7 @@ class deepsort_rbc():
 		self.tracker= Tracker(self.metric, max_age=12, n_init=1)			
 
 	def run_deep_sort(self, out_scores, out_boxes, features):
-		if out_boxes==[]:			
+		if not out_boxes:
 			self.tracker.predict()
 			print('No detections')
 			trackers = self.tracker.tracks

@@ -101,7 +101,7 @@ class ContrastiveLoss(nn.Module):
             else:
                 return (cost_s.sum() + cost_im.sum()).div(im.shape[0] * s.shape[0])
         
-        return (cost_s.sum() + cost_im.sum())#/(im.shape[0])
+        return cost_s.sum() + cost_im.sum()  #/(im.shape[0])
 
 
 def compute_mean_distance_l2(c, s):

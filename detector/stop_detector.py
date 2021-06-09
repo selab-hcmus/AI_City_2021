@@ -30,7 +30,7 @@ class StopDetector(object):
         print(f'mean distance: {mean_distance}')
         print(distances)
         for i in range(N-self.skip_frame):
-            if (distances[i] < mean_distance*self.alpha):
+            if distances[i] < mean_distance*self.alpha:
                 return True
         
         return False

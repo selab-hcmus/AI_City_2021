@@ -271,7 +271,7 @@ def init_pretrained_weights(model, model_url):
     # They are also in the checkpoints in model_urls. This pattern is used
     # to find such keys.
     pattern = re.compile(
-        r'^(.*denselayer\d+\.(?:norm|relu|conv))\.((?:[12])\.(?:weight|bias|running_mean|running_var))$'
+        r'^(.*denselayer\d+\.(?:norm|relu|conv))\.([12]\.(?:weight|bias|running_mean|running_var))$'
     )
     for key in list(pretrain_dict.keys()):
         res = pattern.match(key)

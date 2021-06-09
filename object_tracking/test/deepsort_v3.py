@@ -93,8 +93,7 @@ def tracking(config: dict, json_save_dir: str, vis_save_dir: str, verbose=True):
                 id_num = str(track.track_id) #Get the ID for the particular track.
                 features = track.features #Get the feature vector corresponding to the detection.
 
-                track_dict = {}
-                track_dict["id"] = id_num
+                track_dict = {"id": id_num}
 
                 ans_box = get_closest_box(detections_class, bbox)
                 bbox = ans_box

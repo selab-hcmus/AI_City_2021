@@ -80,12 +80,12 @@ class Caption(object):
                 action = srl['action']
                 obj = self._extract_object(srl)
 
-                if (not srl['is_main_subject']):
+                if not srl['is_main_subject']:
                     continue 
 
-                if (action in ACTION_VOCAB):
+                if action in ACTION_VOCAB:
                     self.sv_format.append(self._create_sv_sample(action))
-                elif (obj is not None):
+                elif obj is not None:
                     self.svo_format.append(self._create_svo_sample(action, obj))
         pass
 

@@ -55,8 +55,7 @@ def extract_box_feat(model, cfg, mode: str):
     fail_result = {}
 
     for track_id in tqdm(box_dict.keys()):
-        ans = {}
-        ans[track_id] = {}
+        ans = {track_id: {}}
         fail_result[track_id] = []
         filename = f'{track_id}.pickle'
         save_path = os.path.join(cfg['SAVE_FEATURE_DIR'], filename)

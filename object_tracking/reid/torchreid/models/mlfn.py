@@ -111,11 +111,13 @@ class MLFN(nn.Module):
         num_classes,
         loss='softmax',
         groups=32,
-        channels=[64, 256, 512, 1024, 2048],
+            channels=None,
         embed_dim=1024,
         **kwargs
     ):
         super(MLFN, self).__init__()
+        if channels is None:
+            channels = [64, 256, 512, 1024, 2048]
         self.loss = loss
         self.groups = groups
 

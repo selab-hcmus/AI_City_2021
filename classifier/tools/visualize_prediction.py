@@ -72,7 +72,7 @@ def main_veh():
     print(f'Visualize predictions to {save_dir}')
     
     for key, val in cfg_veh["class_map"].items():
-        if (type(val) == int):
+        if type(val) == int:
             continue
         os.makedirs(osp.join(save_dir, val), exist_ok=True)
     

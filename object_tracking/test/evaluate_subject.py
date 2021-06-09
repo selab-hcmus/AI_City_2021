@@ -34,7 +34,7 @@ def evaluate(gt_boxes: list, cand_tracks: list):
             gt_box = gt_boxes[frame_idx]
             inside = is_box_in_box(gt_box, track_box)
             
-            if inside == True:
+            if inside:
                 iou = 1.0
             else:
                 iou = calculate_iou(gt_box, track_box)
@@ -42,7 +42,7 @@ def evaluate(gt_boxes: list, cand_tracks: list):
             # if track.track_id == '400':
             dist = calculate_distance(gt_box, track_box)
             
-            if (iou > ACCEPT_IOU_THRES): #or (inside == True):
+            if iou > ACCEPT_IOU_THRES: #or (inside == True):
                 if start_frame == -1:
                     start_frame = frame_idx
                 end_frame = frame_idx

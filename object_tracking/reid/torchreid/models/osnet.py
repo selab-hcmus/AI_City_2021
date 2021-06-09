@@ -351,9 +351,8 @@ class OSNet(nn.Module):
         reduce_spatial_size,
         IN=False
     ):
-        layers = []
+        layers = [block(in_channels, out_channels, IN=IN)]
 
-        layers.append(block(in_channels, out_channels, IN=IN))
         for i in range(1, layer):
             layers.append(block(out_channels, out_channels, IN=IN))
 

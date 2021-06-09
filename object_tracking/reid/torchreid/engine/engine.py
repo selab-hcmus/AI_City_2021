@@ -126,7 +126,7 @@ class Engine(object):
         visrank=False,
         visrank_topk=10,
         use_metric_cuhk03=False,
-        ranks=[1, 5, 10, 20],
+            ranks=None,
         rerank=False
     ):
         r"""A unified pipeline for training and evaluating a model.
@@ -160,6 +160,8 @@ class Engine(object):
                 Default is False. This is only enabled when test_only=True.
         """
 
+        if ranks is None:
+            ranks = [1, 5, 10, 20]
         if visrank and not test_only:
             raise ValueError(
                 'visrank can be set to True only if test_only=True'
@@ -297,7 +299,7 @@ class Engine(object):
         visrank_topk=10,
         save_dir='',
         use_metric_cuhk03=False,
-        ranks=[1, 5, 10, 20],
+            ranks=None,
         rerank=False
     ):
         r"""Tests model on target datasets.
@@ -313,6 +315,8 @@ class Engine(object):
             ``extract_features()`` and ``parse_data_for_eval()`` (most of the time),
             but not a must. Please refer to the source code for more details.
         """
+        if ranks is None:
+            ranks = [1, 5, 10, 20]
         self.set_model_mode('eval')
         targets = list(self.test_loader.keys())
 
@@ -353,9 +357,11 @@ class Engine(object):
         visrank_topk=10,
         save_dir='',
         use_metric_cuhk03=False,
-        ranks=[1, 5, 10, 20],
+            ranks=None,
         rerank=False
     ):
+        if ranks is None:
+            ranks = [1, 5, 10, 20]
         batch_time = AverageMeter()
 
         def _feature_extraction(data_loader):

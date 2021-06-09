@@ -199,7 +199,7 @@ class CenterNet(nn.Module):
             c33_reg_loss.view(N * L, K)[masks.view(N * L), 4] = 0
             c33_reg_loss = c33_reg_loss.view(N, L * K)
             if self.more_pos == 0 or N == 0:
-                loss_thresh = c33_reg_loss.new_ones((N)).float()
+                loss_thresh = c33_reg_loss.new_ones(N).float()
             else:
                 loss_thresh = torch.kthvalue(
                     c33_reg_loss,
@@ -437,7 +437,7 @@ class CenterNet(nn.Module):
             c33_masks = torch.cat(c33_masks, dim=0)
         else:
             center_inds = shapes_per_level.new_zeros((0, L)).long()
-            labels = shapes_per_level.new_zeros((0)).long()
+            labels = shapes_per_level.new_zeros(0).long()
             masks = shapes_per_level.new_zeros((0, L)).bool()
             regs = shapes_per_level.new_zeros((0, L, 4)).float()
             c33_inds = shapes_per_level.new_zeros((0, L, K)).long()

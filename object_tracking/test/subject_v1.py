@@ -142,7 +142,7 @@ def main():
     for sample in list_csv:
         json_path = osp.join(old_json_dir, f"{sample['track_id']}.json")
         data = json_load(json_path)
-        if sample['is_perfect'] == True:    
+        if sample['is_perfect']:
             best_track_id = sample['best_tracks'][0]
             data['subject'] = best_track_id
         else:

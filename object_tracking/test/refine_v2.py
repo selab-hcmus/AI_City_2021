@@ -12,7 +12,7 @@ from utils import AverageMeter, json_save, json_load
 
 def get_center_point(box: list):
     # xyxy
-    return ((box[0]+box[1])/2, (box[2]+box[3])/2)
+    return (box[0] + box[1]) / 2, (box[2] + box[3]) / 2
 
 def check_wrong_boxes(track_data: TrackResult):
     dist_meter = AverageMeter()

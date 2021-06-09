@@ -205,7 +205,7 @@ def main():
         visualize(data, None, DATA_DIR, SAVE_DIR_VIDEO, row_dict, val_id)
         ans.append(row_dict)
         count += 1
-        if (count >= 10):
+        if count >= 10:
             break
 
     ans_df = pd.DataFrame(data=ans)

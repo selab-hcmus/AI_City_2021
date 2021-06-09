@@ -30,7 +30,7 @@ class SRL(object):
     try:
       for text in extract_text:
         sentence = text['description']
-        pos_part = re.findall(r"\[(.*?)\]", sentence)
+        pos_part = re.findall(r"\[(.*?)]", sentence)
         pos_part = [self.srl_helper.clean_query_after_out(sub_pos_part) for 
                     sub_pos_part in pos_part]
         list_pos_parts.append(pos_part)

@@ -57,9 +57,7 @@ def train_model_type(model, cfg, csv_path: str, json_path: str, box_dir: str):
     lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode='min', factor=0.1, patience=10, min_lr=1e-07, eps=1e-07, verbose=True)
 
-    dataloaders = {}
-    dataloaders['train'] = train_dataloader
-    dataloaders['val'] = val_dataloader
+    dataloaders = {'train': train_dataloader, 'val': val_dataloader}
 
     save_path = osp.join(cfg['save_path'], cfg['date'], cfg['type'])
     os.makedirs(save_path, exist_ok=True)

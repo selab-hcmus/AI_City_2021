@@ -116,7 +116,7 @@ def get_priority_list_by_action(top_keys_visual, query_actions):
         elif (is_list_in_list(query_actions, [LABEL_MAP['stop']])
             and not is_list_in_list(query_actions, [LABEL_MAP['turn']])
         ):
-            if (order_visual in STRICT_STOP):
+            if order_visual in STRICT_STOP:
                 list_a.append(key_visual)
                 pass
             else:
@@ -126,7 +126,7 @@ def get_priority_list_by_action(top_keys_visual, query_actions):
         elif (is_list_in_list(query_actions, [LABEL_MAP['turn']])
             and not is_list_in_list(query_actions, [LABEL_MAP['stop']])
         ):
-            if (order_visual in STRICT_TURN):
+            if order_visual in STRICT_TURN:
                 list_a.append(key_visual)
                 pass
             else:

@@ -22,19 +22,19 @@ from .custom_fast_rcnn import CustomFastRCNNOutputLayers
 @ROI_HEADS_REGISTRY.register()
 class CustomROIHeads(StandardROIHeads):
     @classmethod
-    def _init_box_head(self, cfg, input_shape):
+    def _init_box_head(cls, cfg, input_shape):
         ret = super()._init_box_head(cfg, input_shape)
         del ret['box_predictor']
         ret['box_predictor'] = CustomFastRCNNOutputLayers(
             cfg, ret['box_head'].output_shape)
-        self.debug = cfg.DEBUG
-        if self.debug:
-            self.debug_show_name = cfg.DEBUG_SHOW_NAME
-            self.save_debug = cfg.SAVE_DEBUG
-            self.vis_thresh = cfg.VIS_THRESH
-            self.pixel_mean = torch.Tensor(cfg.MODEL.PIXEL_MEAN).to(
+        cls.debug = cfg.DEBUG
+        if cls.debug:
+            cls.debug_show_name = cfg.DEBUG_SHOW_NAME
+            cls.save_debug = cfg.SAVE_DEBUG
+            cls.vis_thresh = cfg.VIS_THRESH
+            cls.pixel_mean = torch.Tensor(cfg.MODEL.PIXEL_MEAN).to(
                 torch.device(cfg.MODEL.DEVICE)).view(3, 1, 1)
-            self.pixel_std = torch.Tensor(cfg.MODEL.PIXEL_STD).to(
+            cls.pixel_std = torch.Tensor(cfg.MODEL.PIXEL_STD).to(
                 torch.device(cfg.MODEL.DEVICE)).view(3, 1, 1)
         return ret
 
