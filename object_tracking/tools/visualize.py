@@ -18,7 +18,7 @@ def visualize_subject(
         
     
     vid_height, vid_width, _ = list_frames[0].shape
-    if list_track_ids == None:
+    if list_track_ids is None:
         list_track_ids = list(json_data['track_map'].keys())
         if json_data['subject'] is not None:
             list_track_ids.remove(json_data['subject'])
@@ -64,7 +64,7 @@ def visualize(json_data: dict, list_track_ids: list, data_dir: str, vid_save_pat
         pass
     
     vid_height, vid_width, _ = list_frames[0].shape
-    if list_track_ids == None:
+    if list_track_ids is None:
         list_track_ids = list(json_data['track_map'].keys())
         
     for track_id in list_track_ids:
