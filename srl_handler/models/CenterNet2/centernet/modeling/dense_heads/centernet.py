@@ -288,11 +288,11 @@ class CenterNet(nn.Module):
             centers = ((boxes[:, [0, 1]] + boxes[:, [2, 3]]) / 2) # N x 2
             centers_expanded = centers.view(1, N, 2).expand(M, N, 2) # M x N x 2
             strides_expanded = strides.view(M, 1, 1).expand(M, N, 2)
-            centers_discret = ((centers_expanded / strides_expanded).int() * \
-                strides_expanded).float() + strides_expanded / 2 # M x N x 2
+            centers_discret = ((centers_expanded / strides_expanded).int() *
+                               strides_expanded).float() + strides_expanded / 2 # M x N x 2
             
-            is_peak = (((grids.view(M, 1, 2).expand(M, N, 2) - \
-                centers_discret) ** 2).sum(dim=2) == 0) # M x N
+            is_peak = (((grids.view(M, 1, 2).expand(M, N, 2) -
+                         centers_discret) ** 2).sum(dim=2) == 0) # M x N
             is_in_boxes = reg_target.min(dim=2)[0] > 0 # M x N
             is_center3x3 = self.get_center3x3(
                 grids, centers, strides) & is_in_boxes # M x N
@@ -300,8 +300,8 @@ class CenterNet(nn.Module):
                 reg_target, reg_size_ranges) # M x N
             reg_mask = is_center3x3 & is_cared_in_the_level # M x N
 
-            dist2 = ((grids.view(M, 1, 2).expand(M, N, 2) - \
-                centers_expanded) ** 2).sum(dim=2) # M x N
+            dist2 = ((grids.view(M, 1, 2).expand(M, N, 2) -
+                      centers_expanded) ** 2).sum(dim=2) # M x N
             dist2[is_peak] = 0
             radius2 = self.delta ** 2 * 2 * area # N
             radius2 = torch.clamp(
@@ -405,8 +405,8 @@ class CenterNet(nn.Module):
             reg_targets_per_im: M x N x 4
             size_ranges: M x 2
         '''
-        crit = ((reg_targets_per_im[:, :, :2] + \
-            reg_targets_per_im[:, :, 2:])**2).sum(dim=2) ** 0.5 / 2 # M x N
+        crit = ((reg_targets_per_im[:, :, :2] +
+                 reg_targets_per_im[:, :, 2:])**2).sum(dim=2) ** 0.5 / 2 # M x N
         is_cared_in_the_level = (crit >= size_ranges[:, [0]]) & \
             (crit <= size_ranges[:, [1]])
         return is_cared_in_the_level
@@ -480,8 +480,8 @@ class CenterNet(nn.Module):
         locations_expanded = locations.view(M, 1, 2).expand(M, N, 2) # M x N x 2
         centers_expanded = centers.view(1, N, 2).expand(M, N, 2) # M x N x 2
         strides_expanded = strides.view(M, 1, 1).expand(M, N, 2) # M x N
-        centers_discret = ((centers_expanded / strides_expanded).int() * \
-            strides_expanded).float() + strides_expanded / 2 # M x N x 2
+        centers_discret = ((centers_expanded / strides_expanded).int() *
+                           strides_expanded).float() + strides_expanded / 2 # M x N x 2
         dist_x = (locations_expanded[:, :, 0] - centers_discret[:, :, 0]).abs()
         dist_y = (locations_expanded[:, :, 1] - centers_discret[:, :, 1]).abs()
         return (dist_x <= strides_expanded[:, :, 0]) & \
