@@ -130,8 +130,7 @@ class MobileNetV2(nn.Module):
         # c: output channels
         # n: number of blocks
         # s: stride for first layer
-        layers = []
-        layers.append(block(self.in_channels, c, t, s))
+        layers = [block(self.in_channels, c, t, s)]
         self.in_channels = c
         for i in range(1, n):
             layers.append(block(self.in_channels, c, t))

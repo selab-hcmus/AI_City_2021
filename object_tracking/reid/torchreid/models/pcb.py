@@ -109,13 +109,9 @@ class DimReduceLayer(nn.Module):
 
     def __init__(self, in_channels, out_channels, nonlinear):
         super(DimReduceLayer, self).__init__()
-        layers = []
-        layers.append(
-            nn.Conv2d(
-                in_channels, out_channels, 1, stride=1, padding=0, bias=False
-            )
-        )
-        layers.append(nn.BatchNorm2d(out_channels))
+        layers = [nn.Conv2d(
+            in_channels, out_channels, 1, stride=1, padding=0, bias=False
+        ), nn.BatchNorm2d(out_channels)]
 
         if nonlinear == 'relu':
             layers.append(nn.ReLU(inplace=True))
@@ -199,8 +195,7 @@ class PCB(nn.Module):
                 nn.BatchNorm2d(planes * block.expansion),
             )
 
-        layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample))
+        layers = [block(self.inplanes, planes, stride, downsample)]
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
             layers.append(block(self.inplanes, planes))
