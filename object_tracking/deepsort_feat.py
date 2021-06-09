@@ -18,7 +18,7 @@ class deepsort_rbc():
 		self.tracker= Tracker(self.metric, max_age=12, n_init=1)			
 
 	def run_deep_sort(self, out_scores, out_boxes, features):
-		if out_boxes==[]:			
+		if not out_boxes:
 			self.tracker.predict()
 			print('No detections')
 			trackers = self.tracker.tracks
