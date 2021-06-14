@@ -141,7 +141,7 @@ if __name__ == '__main__':
     config['deepsort'] = ds_cfg
 
     mode='test'
-    exp_name = f'{mode}_deepsort_v4-3'
+    exp_name = f'{mode}_deepsort_v1'
     save_dir = osp.join(SAVE_DIR, exp_name)
     os.makedirs(save_dir, exist_ok=True)
 

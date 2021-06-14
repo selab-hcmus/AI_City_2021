@@ -77,6 +77,9 @@ class Track:
         self._n_init = n_init
         self._max_age = max_age
 
+    def last_feature(self):
+        return self.features[-1]
+
     def to_tlwh(self):
         """Get current position in bounding box format `(top left x, top left y,
         width, height)`.

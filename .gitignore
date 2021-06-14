@@ -25,6 +25,7 @@ classifier/results/*
 classifier/notebooks/*
 
 # Object tracking
+object_tracking/deep_sort_v*
 object_tracking/notebook
 object_tracking/data/*
 object_tracking/results/*

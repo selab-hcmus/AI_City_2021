@@ -5,8 +5,9 @@ from tqdm import tqdm
 from utils import json_load, json_save
 from object_tracking.library import VideoResult, TrackResult
 from object_tracking.test.test_utils import SAVE_DIR, calculate_iou, calculate_distance
-track_res_dir = osp.join(SAVE_DIR, 'test_deepsort_v4-1', 'json_subject')
-save_dir = osp.join(SAVE_DIR, 'test_deepsort_v4-1', 'json_stop')
+track_res_dir = osp.join(SAVE_DIR, 'test_deepsort_v4-2', 'json_subject')
+save_dir = osp.join(SAVE_DIR, 'test_deepsort_v4-2', 'json_stop')
+print(f'Save result to {save_dir}')
 os.makedirs(save_dir)
 
 STOP_IOU_THRES = 0.6

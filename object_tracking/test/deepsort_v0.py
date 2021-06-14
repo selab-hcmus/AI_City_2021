@@ -6,24 +6,17 @@ from tqdm import tqdm
 import numpy as np
 
 from utils import json_load, json_save, pickle_load, pickle_save
+from dataset.data_manager import TEST_TRACK_JSON, test_track_map
 from object_tracking.utils import (
     ROOT_DIR,
-    TRAIN_TRACK_DIR, TEST_TRACK_DIR, VEHCOL_FEAT_DIR, REID_FEAT_DIR,
+    TRAIN_TRACK_DIR, TEST_TRACK_DIR,
     get_img_name, get_gt_from_idx, get_closest_box, 
 )
 from object_tracking.tools import convert_video_track, visualize
-from object_tracking.test.test_utils import (
-    SAVE_DIR
-)
-from object_tracking.deepsort import deepsort_rbc
+from object_tracking.test.test_utils import SAVE_DIR
+from object_tracking.deep_sort import TrackingManager
 
-save_dir = osp.join(SAVE_DIR, 'deepsort_v3')
-save_json_dir = osp.join(save_dir, 'json')
-save_vis_dir = osp.join(save_dir, 'video')
-os.makedirs(save_json_dir, exist_ok=True)
-os.makedirs(save_vis_dir, exist_ok=True)
-
-ID_TO_COMPARE = [5, 6, 20, 34, 40, 64, 182, 188, 239, 310, 339, 349, 410, 436, 476]
+TEST_TRACK_ORDERS = list(test_track_map.values())
 
 def concat_feat(vehcol_feats: list, reid_feats: list):
     new_feats = []
@@ -32,34 +25,33 @@ def concat_feat(vehcol_feats: list, reid_feats: list):
 
     return new_feats
 
-
-def tracking(config: dict, json_save_dir: str, vis_save_dir: str, verbose=True):
+def tracking(config: dict, ds_config: dict, json_save_dir: str, vis_save_dir: str, verbose=False):
     mode_json_dir = json_save_dir
     gt_dict = json_load(config["track_dir"])
     print(f'>> Run DeepSort on {config["mode"]} mode, save result to {mode_json_dir}')
 
-    for track_order in ID_TO_COMPARE:
+    for track_order in tqdm(config["list_keys"]):
         track_order = str(track_order)
         if verbose:
             print(f'tracking order {track_order}')
         img_dict = gt_dict[track_order]
         img_names = get_img_name(img_dict)
         
-        vehcol_feat_path = osp.join(VEHCOL_FEAT_DIR, f'{track_order}.pkl')
-        reid_feat_path = osp.join(REID_FEAT_DIR, f'{track_order}.pkl')
-        vehcol_feat = pickle_load(vehcol_feat_path)
-        reid_feat = pickle_load(reid_feat_path)
+        feat_path = osp.join(config['feat_dir'][0], f'{track_order}.pkl')
+        reid_feat = pickle_load(feat_path)
+        vehcol_path = osp.join(config['feat_dir'][1], f'{track_order}.pkl')
+        vehcol_feat = pickle_load(vehcol_path)
 
         ans = {}
         #Initialize deep sort.
-        deepsort = deepsort_rbc()
+        deepsort = TrackingManager(ds_config) #deepsort_rbc()
 
         if config["save_video"]:
             fourcc = cv2.VideoWriter_fourcc(*'XVID')
             save_visualize_path = os.path.join(vis_save_dir, f'{track_order}.avi')
             out = None
 
-        for i in tqdm(range(len(img_names))):
+        for i in (range(len(img_names))):
             img_path = osp.join(ROOT_DIR, img_names[i])
 
             frame = cv2.imread(img_path)
@@ -76,8 +68,8 @@ def tracking(config: dict, json_save_dir: str, vis_save_dir: str, verbose=True):
             vehcol_features = vehcol_feat[img_names[i]]
             reid_features = reid_feat[img_names[i]]
             new_feats = concat_feat(vehcol_features, reid_features)
-
             features = new_feats
+            # features = reid_features
             
             tracker, detections_class = deepsort.run_deep_sort(out_scores, detections, features)
 
@@ -91,8 +83,7 @@ def tracking(config: dict, json_save_dir: str, vis_save_dir: str, verbose=True):
 
                 bbox = track.to_tlbr() #Get the corrected/predicted bounding box
                 id_num = str(track.track_id) #Get the ID for the particular track.
-                features = track.features #Get the feature vector corresponding to the detection.
-
+                # feature = track.last_feature() #Get the feature vector corresponding to the detection.
                 track_dict = {}
                 track_dict["id"] = id_num
 
@@ -100,7 +91,7 @@ def tracking(config: dict, json_save_dir: str, vis_save_dir: str, verbose=True):
                 bbox = ans_box
                 # track_dict["box"] = [int(ans_box[0]), int(ans_box[1]), int(ans_box[2]), int(ans_box[3])]
                 track_dict["box"] = [int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])]
-                track_dict["feature"] = features
+                # track_dict["feature"] = feature
                 track_list.append(track_dict)
 
                 if config["save_video"]:
@@ -122,16 +113,48 @@ def tracking(config: dict, json_save_dir: str, vis_save_dir: str, verbose=True):
             out.release()
         
         save_json_path = os.path.join(mode_json_dir, f'{track_order}.json')
-        reformat_res = convert_video_track(ans, save_json_path)
-
+        reformat_res = convert_video_track(ans, save_json_path, save_feat=config['save_feat'])
     pass
 
 if __name__ == '__main__':
+    KEY_TO_TEST = [448]
     config = {
-        "train_total": {
-            "track_dir": TRAIN_TRACK_DIR,
-            "mode": "train_total",
+        # "train_total": {
+        #     "track_dir": TRAIN_TRACK_DIR,
+        #     "mode": "train_total",
+        #     "save_video": False,
+        #     "save_feat": False,
+        # },
+        "test": {
+            "track_dir": TEST_TRACK_DIR,
+            "feat_dir": ["reid/results/test_feat_tracking", "/home/ntphat/projects/AI_City_2021/classifier/results/May31_uptrain/test_feat_tracking"],
             "save_video": True,
-        },
+            "save_feat": False,
+            "mode": 'test',
+            "list_keys": TEST_TRACK_ORDERS,
+        }
     }
-    tracking(config['train_total'], save_json_dir, save_vis_dir, verbose=True)
+    ds_cfg = {
+        'METRIC': {'NAME': 'cosine', 'THRESHOLD': 0.2, 'BUDGET': 20},
+        'TRACKER': {'MAX_IOU_DISTANCE': 0.9, 'MAX_AGE': 2, 'N_INIT': 1},
+    }
+
+    config['deepsort'] = ds_cfg
+
+    mode='test'
+    exp_name = f'{mode}_deepsort_v0-1'
+    save_dir = osp.join(SAVE_DIR, exp_name)
+    os.makedirs(save_dir, exist_ok=True)
+
+    print(f'Save result to {save_dir}')
+    json_save(config, osp.join(save_dir, 'config.json'))
+    
+    save_json_dir = osp.join(save_dir, 'json')
+    save_vis_dir = osp.join(save_dir, 'video')
+
+    print(f'[{exp_name}]: Save tracking exp results to {save_dir}')
+    
+    os.makedirs(save_json_dir, exist_ok=True)
+    os.makedirs(save_vis_dir, exist_ok=True)
+    
+    tracking(config[mode], config['deepsort'], save_json_dir, save_vis_dir, verbose=False)

@@ -41,27 +41,35 @@ class TrackResult(object):
         pass
     pass
 
-    def set_boxes_data(self, list_frames: list):
-        self.cv_boxes = []
-        for i, order in enumerate(self.frame_order):
-            fpath = osp.join(DATA_DIR, list_frames[order])
+    def set_boxes_data(self, list_frames: list, ids_to_use: list = None):
+        cv_boxes = []
+        # if ids_to_use is not None:
+        #     list_frame = [self.frame_order[i] for i in ids_to_use]
+        # else:
+        #     list_frame = self.frame_order
+        for j, order in enumerate(ids_to_use):
+            fpath = osp.join(DATA_DIR, list_frames[self.frame_order[order]])
             cv_img = cv2.imread(fpath)
-            box = self.boxes[i] #xyxy
+            box = self.boxes[order] #xyxy
             box = [int(i) for i in box]
             cv_box = cv_img[box[1]:box[3], box[0]: box[2], :]
-            self.cv_boxes.append(cv_box)
+            cv_boxes.append(cv_box)
 
-    def set_veh_class(self, classifier_manager, thres=0.7):
+        return cv_boxes
+
+    def get_valid_index(self, idx, max_idx):
+        return max(min(idx, max_idx), 0)
+
+    def set_veh_class(self, list_frames, classifier_manager, thres=0.7):
         N = len(self.boxes)
-        ids_to_use = [N//6, 2*N//6, 3*N//6, 4*N//6, 5*N//6]
+        # ids_to_use = [N//6, 2*N//6, 3*N//6, 4*N//6, 5*N//6]
+        ids_to_use = [N//2-2, N//2-1, N//2, N//2+1, N//2+2]
+        ids_to_use = [self.get_valid_index(i, N-1) for i in ids_to_use]
         weights = np.ones(len(ids_to_use))
-        weights[0] = 2
-        weights[-1] = 2
-        feed_boxes = []
-        for i in ids_to_use:
-            feed_boxes.append(self.cv_boxes[i])
+        weights[1:4] = 2
 
-        box_names, self.final_vehicle, _, _ = classifier_manager.get_veh_predictions(feed_boxes, thres, weights)
+        boxes_to_use = self.set_boxes_data(list_frames, ids_to_use)
+        box_names, self.final_vehicle, _, _ = classifier_manager.get_veh_predictions(boxes_to_use, thres, weights)
         pass 
 
     def get_final_classname(self):
@@ -112,8 +120,8 @@ class VideoResult(object):
 
     def set_class_names(self, classifier_manager):
         for track_id in self.track_map:
-            self.track_map[track_id].set_boxes_data(self.list_frames)
-            self.track_map[track_id].set_veh_class(classifier_manager, 0.8)
+            # self.track_map[track_id].set_boxes_data(self.list_frames)
+            self.track_map[track_id].set_veh_class(self.list_frames, classifier_manager, 0.5)
         pass
 
     ## UTILITIES
@@ -150,7 +158,7 @@ class VideoResult(object):
     def get_subject(self):
         return self.subject
 
-    def visualize(self, save_path: str):
+    def visualize(self, save_path: str, attn_mask: np.ndarray=None):
         list_frames = []
         for fname in self.list_frames:
             fpath = osp.join(DATA_DIR, fname)
@@ -190,6 +198,10 @@ class VideoResult(object):
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
         vid_writer = cv2.VideoWriter(save_path,fourcc, 1, (vid_width, vid_height))
         for cv_frame in list_frames:
+            if attn_mask is not None:
+                attn_mask[np.where(attn_mask <= 0.3)] = 0.3
+                cv_frame = (cv_frame*attn_mask).astype(np.uint8)
+
             vid_writer.write(cv_frame)
             pass
         vid_writer.release()
