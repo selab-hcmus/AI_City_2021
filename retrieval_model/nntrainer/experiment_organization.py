@@ -38,7 +38,7 @@ class ExperimentFilesHandler:
         self.run_name: str = run_name
         self.model_type: str = model_type
         # self.path_base: Path = Path(log_dir) / self.model_type / self.exp_group / "{}_{}".format(self.exp_name, self.run_name)
-        self.path_base: Path = Path(log_dir) / "{}_{}".format(self.exp_name, self.run_name)
+        self.path_base: Path = Path(log_dir) / "{}-{}".format(self.exp_name, self.run_name)
         self.path_logs = self.path_base / TrainerPathConst.DIR_LOGS
         self.path_models = self.path_base / TrainerPathConst.DIR_MODELS
         self.path_metrics = self.path_base / TrainerPathConst.DIR_METRICS

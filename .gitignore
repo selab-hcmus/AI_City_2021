@@ -6,14 +6,21 @@
 ./*/*/*/desktop.ini
 desktop.ini
 
+#Utils 
+utils/notebooks
+
 # dataset
 dataset/*
-!dataset/*.py
+results/*
 
 # SRL + retrieval model
 srl_extraction/data/*
+srl_extraction/notebooks
+srl_extraction/results
 srl_handler/results/*
 retrieval_model/experiments/*
+retrieval_model/notebooks
+retrieval_model_v2
 
 # Visualize tool
 visualize_tool/video_mp4
@@ -22,23 +29,24 @@ visualize_tool/results/*
 # Classifier
 classifier/data/*
 classifier/results/*
-classifier/notebooks/*
+classifier/notebooks
 
 # Object tracking
-object_tracking/deep_sort_v*
-object_tracking/notebook
+object_tracking/notebooks
 object_tracking/data/*
 object_tracking/results/*
 object_tracking/results_exp/*
 object_tracking/reid/weights/*
 object_tracking/reid/results/*
 
-# object_tracking/test/*
-
+# Refinement
+refinement/notebooks
+refinement/results
 
 # Relation graph
 relation_graph/data
 relation_graph/results
+relation_graph/notebooks
 relation_graph/*.avi
 
 slurm*

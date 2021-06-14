@@ -28,10 +28,10 @@ class ClassifierManager(object):
             names, final_name, preds, final_pred
         """
         preds = self.veh_model.predict(images)
-        preds, final_pred = filter_track_veh_preds(preds, thres, weight)
+        preds, final_pred, flag_thres = filter_track_veh_preds(preds, thres, weight)
         names = [get_class_name(pred, VEH_CLASS_MAP) for pred in preds]
         final_name = get_class_name(final_pred, VEH_CLASS_MAP)
-        return names, final_name, preds, final_pred
+        return names, final_name, preds, final_pred, flag_thres
     
     def get_col_predictions(self, images: list, thres: float=0.8, weight: list = None):
         """

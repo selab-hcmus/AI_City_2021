@@ -1,4 +1,4 @@
-from dataset.data_manager import json_load
+from utils.data_manager import json_load
 import os, sys, pickle, json
 import os.path as osp 
 import pandas as pd 

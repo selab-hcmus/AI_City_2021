@@ -16,6 +16,7 @@ import os
 import os.path as osp
 from tqdm import tqdm
 
+from object_tracking.utils import EXP_SAVE_DIR
 from object_tracking.library.track_result import TrackResult
 from object_tracking.library import VideoResult
 
@@ -80,7 +81,6 @@ def associate_track(list_tracks: list, similarity_type: str='v1'):
                 print(f'Invalid similarity type')
                 return
 
-            print(f'score: {score}')
             if score > SIMILARITY_THRES:
                 assoc_res.append((track_a.track_id, track_b.track_id, score))
             
@@ -88,7 +88,9 @@ def associate_track(list_tracks: list, similarity_type: str='v1'):
 
 def main():
     res_save_dir = '/home/ntphat/projects/AI_City_2021/object_tracking/results_exp/deepsort_v4/json'
+    exp_id = 'test_deepsort_v4-3'
     
+
     for file_name in tqdm(os.listdir(res_save_dir)):
         if file_name not in ['349.pkl']:
             continue
@@ -100,15 +102,6 @@ def main():
 
         assoc_res = associate_track(list_tracks)
         print(assoc_res)
-
-        # example = list_tracks[0]
-        # print(type(example.features))
-        # print(len(example.features))
-        # print(type(example.features[0]))
-        # print(example.features[0].shape)
-        # print(len(example.boxes))
-        # print(type(example.feature))
-        
     pass
 
 if __name__ == '__main__':

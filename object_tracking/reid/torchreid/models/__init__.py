@@ -47,6 +47,7 @@ __model_factory = {
     'xception': xception,
     'resnet50_ibn_a': resnet50_ibn_a,
     'resnet50_ibn_b': resnet50_ibn_b,
+    'resnet101_ibn_a': resnet101_ibn_a,
     # lightweight models
     'nasnsetmobile': nasnetamobile,
     'mobilenetv2_x1_0': mobilenetv2_x1_0,

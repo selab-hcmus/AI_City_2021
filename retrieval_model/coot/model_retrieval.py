@@ -26,18 +26,17 @@ class RetrievalModelManager(models.BaseModelManager):
         # find out input dimensions to the network
         input_dims = {
             RetrievalNetworksConst.NET_VIDEO_LOCAL: cfg.dataset_val.vid_feat_dim,
-            RetrievalNetworksConst.NET_VIDEO_GLOBAL: cfg.model_cfgs[RetrievalNetworksConst.NET_VIDEO_LOCAL].output_dim,
+            # RetrievalNetworksConst.NET_VIDEO_GLOBAL: cfg.model_cfgs[RetrievalNetworksConst.NET_VIDEO_LOCAL].output_dim,
             RetrievalNetworksConst.NET_TEXT_LOCAL: cfg.dataset_val.text_feat_dim,
-            RetrievalNetworksConst.NET_TEXT_GLOBAL: cfg.model_cfgs[RetrievalNetworksConst.NET_TEXT_LOCAL].output_dim,
+            # RetrievalNetworksConst.NET_TEXT_GLOBAL: cfg.model_cfgs[RetrievalNetworksConst.NET_TEXT_LOCAL].output_dim,
         }
 
-        # create the 4 networks
+        # create the 2 networks
         for key in RetrievalNetworksConst.values():
             # load model config
             current_cfg: models.TransformerConfig = cfg.model_cfgs[key]
             # create the network
             if current_cfg.name == models.TransformerTypesConst.TRANSFORMER_LEGACY:
-                # old transformer
                 self.model_dict[key] = models.TransformerLegacy(current_cfg, input_dims[key])
             else:
                 raise NotImplementedError(f"Coot model type {current_cfg.name} undefined")

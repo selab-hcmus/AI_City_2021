@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 
-__all__ = ['resnet50_ibn_a']
+__all__ = ['resnet50_ibn_a', 'resnet101_ibn_a']
 
 model_urls = {
     'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
@@ -286,4 +286,13 @@ def resnet50_ibn_a(num_classes, loss='softmax', pretrained=False, **kwargs):
     )
     if pretrained:
         init_pretrained_weights(model, model_urls['resnet50'])
+    return model
+
+
+def resnet101_ibn_a(num_classes, loss='softmax', pretrained=False, **kwargs):
+    model = ResNet(
+        Bottleneck, [3, 8, 36, 3], num_classes=num_classes, loss=loss, **kwargs
+    )
+    if pretrained:
+        init_pretrained_weights(model, model_urls['resnet101'])
     return model

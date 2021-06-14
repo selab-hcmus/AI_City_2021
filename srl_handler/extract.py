@@ -14,7 +14,7 @@ from srl_handler.utils.constant import (
 from srl_handler.utils.common import (
     refine_list_colors, refine_list_subjects
 )
-from dataset.data_manager import (
+from utils.data_manager import (
     test_query_map, train_track_map
 )
 

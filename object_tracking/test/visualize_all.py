@@ -2,7 +2,7 @@ import os
 import os.path as osp
 from tqdm import tqdm
 
-from dataset.data_manager import DATA_DIR
+from utils.data_manager import DATA_DIR
 from object_tracking.tools import visualize, visualize_subject
 from utils import json_load
 

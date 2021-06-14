@@ -18,7 +18,7 @@ from coot import model_retrieval
 from coot.configs_retrieval import (
     CootMetersConst as CMeters, ExperimentTypesConst, RetrievalConfig, RetrievalTrainerState)
 from coot.aic_dataset import RetrievalDataBatchTuple
-from coot.loss_fn import ContrastiveLoss, CycleConsistencyLoss, LossesConst
+from coot.loss_fn import ContrastiveLoss, LossesConst
 from nntrainer import lr_scheduler, optimization, retrieval, trainer_base
 
 
@@ -35,6 +35,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
             log_dir=log_dir, log_level=log_level, logger=logger, print_graph=print_graph, reset=reset,
             load_best=load_best, load_epoch=load_epoch, load_model=load_model, is_test=inference_only)
 
+        print(f'Save dir: {self.exp.path_base}')
         # ---------- setup ----------
 
         # update type hints from base classes to inherited classes
@@ -50,16 +51,12 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         if self.cfg.use_cuda:
             self.loss_contr = self.loss_contr.cuda()
 
-        # cycle consistency
-        if self.cfg.train.loss_cycle_cons != 0:
-            self.loss_cycle_cons = CycleConsistencyLoss(use_cuda=self.cfg.use_cuda)
-
         # ---------- additional metrics ----------
 
         # loss proportions
-        self.metrics.add_meter(CMeters.VAL_LOSS_CC, use_avg=False)
+        # self.metrics.add_meter(CMeters.VAL_LOSS_CC, use_avg=False)
         self.metrics.add_meter(CMeters.VAL_LOSS_CONTRASTIVE, use_avg=False)
-        self.metrics.add_meter(CMeters.TRAIN_LOSS_CC, per_step=True, use_avg=False)
+        # self.metrics.add_meter(CMeters.TRAIN_LOSS_CC, per_step=True, use_avg=False)
         self.metrics.add_meter(CMeters.TRAIN_LOSS_CONTRASTIVE, per_step=True, use_avg=False)
 
         # retrieval validation metrics must be constructed as product of two lists
@@ -96,6 +93,8 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         self.best_mrr = 0.0
         self.best_p2v_r1 = 0.0
 
+
+    # LOSS FUNCTIONS
     def compute_align_loss(self, visual_emb: th.Tensor, text_emb: th.Tensor) -> th.Tensor:
         return self.loss_contr(visual_emb, text_emb)
 
@@ -135,27 +134,8 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         self.logger.info(f"{self.state.total_step}: " + ("{:.3f} " * 2).format(loss, cluster_loss))
         return loss + cluster_loss
     
-    def compute_cyclecons_loss(self, visual_data: model_retrieval.RetrievalVisualEmbTuple,
-                               text_data: model_retrieval.RetrievalTextEmbTuple) -> th.Tensor:
-        """
-        Compute Cycle-Consistency loss.
-
-        Args:
-            visual_data: NamedTuple containing all computed visual embeddings.
-            text_data: NameTuple containing all computed text embeddings.
-
-        Returns:
-            Scalar loss.
-        """
-        if self.cfg.train.loss_cycle_cons != 0:
-            clip_clip_loss, sent_sent_loss, _, _ = self.loss_cycle_cons(
-                visual_data.clip_emb_reshape, visual_data.clip_emb_mask, visual_data.clip_emb_lens,
-                text_data.sent_emb_reshape, text_data.sent_emb_mask, text_data.sent_emb_lens)
-            return self.cfg.train.loss_cycle_cons * (clip_clip_loss + sent_sent_loss)
-        return 0
-
-
-    def phat_save_model(self, postfix_name: str=None):
+    # UTILITIES
+    def phat_save_model(self, postfix_name: str='r1'):
         # models
         models_file = self.exp.get_models_file(self.state.current_epoch)
         save_path = str(models_file)
@@ -165,6 +145,8 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         th.save(state, save_path)
         pass
 
+
+    # TRAIN
     def train_model(self, train_loader: data.DataLoader, val_loader: data.DataLoader) -> None:
         """
         Train epochs until done.
@@ -200,13 +182,9 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
 
                     if self.cfg.train.loss_func == LossesConst.CONTRASTIVE:
                         contr_loss = self.compute_total_constrastive_loss(visual_data, text_data)
-                    
-                    elif self.cfg.train.loss_func == LossesConst.CROSSENTROPY:
-                        contr_loss = self.compute_total_ce_loss(visual_data, text_data)
-                    
-                    cc_loss = self.compute_cyclecons_loss(visual_data, text_data)
-
-                    loss = contr_loss + cc_loss
+                    # elif self.cfg.train.loss_func == LossesConst.CROSSENTROPY:
+                    #     contr_loss = self.compute_total_ce_loss(visual_data, text_data)
+                    loss = contr_loss
 
                 self.hook_post_forward_step_timer()  # hook for step timing
 
@@ -221,7 +199,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
                     loss.backward()
                     self.optimizer.step()
 
-                additional_log = f"Loss Contrast: {contr_loss:.5f}, Loss Cycle: {cc_loss:.5f}"
+                additional_log = f"Loss Contrast: {contr_loss:.5f}"
                 self.hook_post_backward_step_timer()  # hook for step timing
 
                 # post-step hook: gradient clipping, profile gpu, update metrics, count step, step LR scheduler, log
@@ -241,13 +219,14 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
                 # run validation, collect video and clip retrieval metrics
                 _val_loss, _val_score, is_best, _metrics = self.validate_epoch(val_loader)
 
-            print(f'[PHAT]: hook post train')
             # post-epoch hook: scheduler, save checkpoint, time bookkeeping, feed tensorboard
             self.hook_post_train_and_val_epoch(do_val, is_best)
 
         # show end of training log message
         self.hook_post_train()
 
+
+    # VALIDATE
     @th.no_grad()
     def validate_epoch(self, data_loader: data.DataLoader, val_clips: bool = False, save_embs: bool = False) -> (
             Tuple[float, float, bool, Tuple[Dict[str, float], Optional[Dict[str, float]]]]):
@@ -256,7 +235,6 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         forward_time_total = 0
         loss_total: th.Tensor = 0.
         contr_loss_total: th.Tensor = 0.
-        cc_loss_total: th.Tensor = 0.
         data_collector = {}
 
         # decide what to collect
@@ -288,9 +266,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
                 elif self.cfg.train.loss_func == LossesConst.CROSSENTROPY:
                     contr_loss = self.compute_total_ce_loss(visual_data, text_data)
                 contr_loss_total += contr_loss
-                cc_loss = self.compute_cyclecons_loss(visual_data, text_data)
-                cc_loss_total += cc_loss
-                loss_total += contr_loss + cc_loss
+                loss_total += contr_loss
 
             self.hook_post_forward_step_timer()
             forward_time_total += self.timedelta_step_forward
@@ -321,10 +297,8 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         # calculate total loss and feed meters
         loss_total /= num_steps
         contr_loss_total /= num_steps
-        cc_loss_total /= num_steps
         forward_time_total /= num_steps
         self.metrics.update_meter(CMeters.VAL_LOSS_CONTRASTIVE, contr_loss_total)
-        self.metrics.update_meter(CMeters.VAL_LOSS_CC, cc_loss_total)
 
         # calculate video-paragraph retrieval and print output table
         self.logger.info(retrieval.VALHEADER)
@@ -349,7 +323,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
 
         # print some more details about the retrieval (time, number of datapoints)
         self.logger.info(
-            f"Loss {loss_total:.5f} (Contr: {contr_loss_total:.5f}, CC: {cc_loss_total:.5f}) "
+            f"Loss {loss_total:.5f} (Contr: {contr_loss_total:.5f}"
             f"Retrieval: {str_vp}{str_cs}total {timer() - self.timer_val_epoch:.3f}s, "
             f"forward {forward_time_total:.3f}s")
 
@@ -370,13 +344,6 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         # check for a new best epoch and update validation results
         is_best = self.check_is_new_best(val_score)
         self.hook_post_val_epoch(loss_total, is_best)
-
-        # if self.is_test:
-        #     # for test runs, save the validation results separately to a file
-        #     self.metrics.feed_metrics(False, self.state.total_step, self.state.current_epoch)
-        #     metrics_file = self.exp.path_base / f"val_ep_{self.state.current_epoch}.json"
-        #     self.metrics.save_epoch_to_file(metrics_file)
-        #     self.logger.info(f"Saved validation results to {metrics_file}")
 
         return loss_total, val_score, is_best, ((res_v2p, res_p2v, sum_vp_at_1), clipsent_results)
 

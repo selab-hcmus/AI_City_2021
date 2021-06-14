@@ -1,7 +1,8 @@
 from .classifier_utils import (
     val_transform,
     preprocess_input, train_model, get_feat_from_subject_box, get_feat_from_model,
-    scan_data
+    scan_data,
+    evaluate_fraction, evaluate_tensor, train_model
 )
 from .config import *
 from .prediction_utils import (

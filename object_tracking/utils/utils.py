@@ -3,17 +3,18 @@ import os
 import os.path as osp
 from tqdm import tqdm
 import numpy as np
+
+from utils.data_manager import RESULT_DIR
 from object_tracking.deep_sort.iou_matching import iou
 
-TRAIN_TRACK_DIR = "/home/ntphat/projects/AI_City_2021/classifier/data/Centernet2_train_veh_order.json"
-TEST_TRACK_DIR = "/home/ntphat/projects/AI_City_2021/classifier/data/Centernet2_test_veh_order.json"
+SAVE_DIR = osp.join(RESULT_DIR, 'object_tracking')
+EXP_SAVE_DIR = osp.join(RESULT_DIR, 'object_tracking_exp')
+TRAIN_TRACK_DIR = "/content/AI_City_2021/classifier/data/Centernet2_train_veh_order.json"
+TEST_TRACK_DIR = "/content/AI_City_2021/classifier/data/Centernet2_test_veh_order.json"
 
-VEHCOL_FEAT_DIR = "/home/ntphat/projects/AI_City_2021/classifier/results/train_feat_tracking"
+VEHCOL_FEAT_DIR = "/content/AI_City_2021/classifier/results/train_feat_tracking"
 REID_FEAT_DIR = "reid/results/train_feat_tracking"
-ROOT_DIR = '/home/ntphat/projects/AI_City_2021/dataset'
-
-TRAIN_TRACKING_RESULT = './results/annotate_time_train'
-TEST_TRACKING_RESULT = './results/annotate_time_test'
+ROOT_DIR = '/content/AI_City_2021/dataset'
 
 def get_closest_box(list_boxes, target_box):
     new_list_boxes = [item.to_tlbr() for item in list_boxes]

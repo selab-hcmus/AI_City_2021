@@ -24,7 +24,6 @@ from retrieval_model.nntrainer import retrieval
 
 EXP_TYPE = ExperimentTypesConst.RETRIEVAL
 
-
 def setup_config():
     # ---------- Setup script arguments. ----------
     parser = utils.ArgParser(description=__doc__)

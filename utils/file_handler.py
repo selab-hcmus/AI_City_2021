@@ -1,5 +1,26 @@
 import json, pickle 
 
+def dict_save(data, save_path: str):
+    if '.json' in save_path:
+        json_save(data, save_path)
+    elif '.pkl' in save_path:
+        pickle_save(data, save_path)
+    else:
+        file_format = save_path.split('.')[-1]
+        print(f'Not supported format {file_format} yet')
+    pass
+
+def dict_load(save_path: str):
+    if '.json' in save_path:
+        return json_load(save_path)
+    elif '.pkl' in save_path:
+        return pickle_load(save_path)
+    else:
+        file_format = save_path.split('.')[-1]
+        print(f'Not supported format {file_format} yet')
+    pass
+
+
 def json_save(data, save_path, verbose=False):
     if verbose:
         print(f'Save data to {save_path}')

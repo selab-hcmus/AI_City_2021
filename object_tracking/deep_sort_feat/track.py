@@ -61,8 +61,7 @@ class Track:
 
     """
 
-    def __init__(self, track_id, n_init, max_age, 
-                feature, confidence, tlwh):
+    def __init__(self, track_id, n_init, max_age, feature, confidence, tlwh):
         self.track_id = track_id
         self.hits = 1
         self.age = 1

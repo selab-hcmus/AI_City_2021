@@ -191,6 +191,6 @@ class RetrievalNetworksConst(typext.ConstantHolder):
     Store network names for COOT.
     """
     NET_VIDEO_LOCAL = "net_video_local"
-    NET_VIDEO_GLOBAL = "net_video_global"
+    # NET_VIDEO_GLOBAL = "net_video_global"
     NET_TEXT_LOCAL = "net_text_local"
-    NET_TEXT_GLOBAL = "net_text_global"
+    # NET_TEXT_GLOBAL = "net_text_global"

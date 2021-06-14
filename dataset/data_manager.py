@@ -2,7 +2,7 @@ import os
 import os.path as osp 
 import json 
 
-DATA_DIR = '/home/ntphat/projects/AI_City_2021/dataset'
+DATA_DIR = '/content/AI_City_2021/dataset'
 TRAIN_TRACK_JSON = osp.join(DATA_DIR, 'data/train-tracks.json')
 TEST_TRACK_JSON = osp.join(DATA_DIR, 'data/test-tracks.json')
 TEST_QUERY_JSON = osp.join(DATA_DIR, 'data/test-tracks.json')

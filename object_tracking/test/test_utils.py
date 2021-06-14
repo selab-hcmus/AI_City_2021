@@ -1,6 +1,11 @@
 import numpy as np
+import os 
+import os.path as osp
+
+from utils.data_manager import RESULT_DIR
 ## GLOBAL CONSTANT
-SAVE_DIR = '/home/ntphat/projects/AI_City_2021/object_tracking/results_exp'
+SAVE_DIR = osp.join(RESULT_DIR, 'object_tracking_exp') #'/content/AI_City_2021/results/object_tracking_exp'
+os.makedirs(SAVE_DIR, exist_ok=True)
 ID_TO_COMPARE = [5, 6, 9, 20, 34, 40, 64, 84, 182, 188, 239, 310, 339, 349, 410, 436, 476]
 
 

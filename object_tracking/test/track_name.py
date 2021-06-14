@@ -1,3 +1,7 @@
+"""
+Get vehicle predictions for each tracks
+"""
+
 import os 
 import os.path as osp
 from tqdm import tqdm
@@ -8,15 +12,16 @@ from object_tracking.test.test_utils import SAVE_DIR
 
 from classifier import ClassifierManager
 
-track_res_dir = osp.join(SAVE_DIR, 'test_deepsort_v4-1', 'json_stop')
-save_dir = osp.join(SAVE_DIR, 'test_deepsort_v4-1', 'json_class')
+track_res_dir = osp.join(SAVE_DIR, 'test_deepsort_v4-3', 'json_stop')
+save_dir = osp.join(SAVE_DIR, 'test_deepsort_v4-June14_15h00')
 os.makedirs(save_dir, exist_ok=True)
+os.makedirs(track_res_dir, exist_ok=True)
 
 
 def main():
     det_manager = ClassifierManager(cuda=True, load_ckpt=True, eval=True)
     list_files = os.listdir(track_res_dir)
-    vid_save_dir = osp.join(save_dir, 'visualize_May31_uptrain')
+    vid_save_dir = osp.join(save_dir, 'visualize') # Change vis save dir here
     os.makedirs(vid_save_dir, exist_ok=True)
 
     print(f'Sava visualization result to {vid_save_dir}')

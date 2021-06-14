@@ -8,31 +8,41 @@ from glob import glob
 from tqdm import tqdm
 import math
 from detector import StopDetector, stop_detector
-from utils import (
-    visualize, PositionState, FollowState, Counter, 
+from relation_graph.utils import (
+    visualize, PositionState, FollowState, Counter, length_vector,
     xyxy_to_xywh, smooth_distance, minus_vector, calculate_velocity_vector
 )
 import pandas as pd
 
-from dataset.data_manager import DATA_DIR
+from utils.data_manager import DATA_DIR, RESULT_DIR
 from object_tracking.tools.visualize import visualize
 from relation_graph.config import (
-    VELOCITY_SKIP_FRAME, VELOCITY_COSINE_THRES, DISTANCE_COSINE_THRES
+    VELOCITY_SKIP_FRAME,
+    # VELOCITY_COSINE_THRES,
+    # DISTANCE_COSINE_THRES,
+    # POSITION_COSINE_THRES,
+    THRES_LEVEL,
+    DISTANCE_THRES,
+    MAX_TRAJ_THRES_LEVEL,
+    FOLLOW_STATE_THRES
 )
+from statistics import mean
+RELATION_SAVE_DIR = osp.join(RESULT_DIR, 'relation_graph')
+# TRAIN_TRACKING_RESULT = '../../object_tracking/results_exp/test_deepsort_v4-1/json_stop'
+TEST_TRACKING_RESULT = osp.join(RESULT_DIR, 'object_tracking_exp', 'test_deepsort_v4-3/json_stop') 
 
-TRAIN_TRACKING_RESULT = '../object_tracking/results_exp/test_deepsort_v4-1/json_subject'
-TEST_TRACKING_RESULT = '../object_tracking/results/annotate_time_test'
-
-EXP_ID = 'relation_v1'
-SAVE_DIR = osp.join('./results', EXP_ID)
+EXP_ID = 'relation_June14_13h14pm_reducecountthres'
+SAVE_DIR = osp.join(RELATION_SAVE_DIR, EXP_ID)
+os.makedirs(osp.join(SAVE_DIR), exist_ok=True)
 SAVE_DIR_CSV = SAVE_DIR
-SAVE_DIR_VIDEO = osp.join(SAVE_DIR, visualize) #'./results/visualize'
-
+SAVE_DIR_VIDEO = osp.join(SAVE_DIR, "visualize")
+os.makedirs(osp.join(SAVE_DIR_VIDEO), exist_ok=True)
+# DATA_DIR = "../../dataset"
 def get_potential_track(track_dir: str):
     ans = []
     for json_path in tqdm(glob(track_dir +'/*.json')):
         json_data = json.load(open(json_path, 'r'))
-        if json_data['n_frames'] > 30:
+        if json_data['n_frames'] >= 5:
             vid_id = json_path.split('/')[-1].split('.')[0]
             # print(f'Work on id: {vid_id}')
             ans.append((vid_id, json_data))
@@ -66,14 +76,14 @@ def get_interval_to_check(track_frame_order, overlapped_frame_order):
 
     # return start_idx, end_idx
 
-def get_follow_relation(track_a: dict, track_b: dict):
+def get_follow_relation(track_a: dict, track_b: dict, pos_thres=0, v_thres=0, traj_thres=0):
     list_frame_a = track_a['frame_order']
     list_frame_b = track_b['frame_order']
     overlapped_frames = list(set(list_frame_a).intersection(set(list_frame_b)))
     overlapped_frames.sort() 
     n = len(overlapped_frames)
     if n <= 4:
-        return FollowState.NO_RELATION # Two tracks are not overlapped
+        return FollowState.NO_RELATION, None, None # Two tracks are not overlapped
 
     # start_idx_a, end_idx_a = get_interval_to_check(list_frame_a, overlapped_frames)
     # start_idx_b, end_idx_b = get_interval_to_check(list_frame_b, overlapped_frames)
@@ -99,6 +109,8 @@ def get_follow_relation(track_a: dict, track_b: dict):
     velocity_vect_b = calculate_velocity_vector(coor_b, skip_frame=VELOCITY_SKIP_FRAME)
     distance_vect_ab = calculate_distance_vector(coor_a, coor_b, skip_frame=VELOCITY_SKIP_FRAME)
     
+    avg_distance = mean([length_vector(v) for v in distance_vect_ab])
+
     # print(f'len(velocity_vect_a): {len(velocity_vect_a)}')
     # print(f'len(velocity_vect_b): {len(velocity_vect_b)}')
     # print(f'len(distance_vect_ab): {len(distance_vect_ab)}')
@@ -107,6 +119,8 @@ def get_follow_relation(track_a: dict, track_b: dict):
     cosine_va_ab = [cosine_similarity(velocity_vect_a[i], distance_vect_ab[i]) for i in range(n)]
     cosine_vb_ab = [cosine_similarity(velocity_vect_b[i], distance_vect_ab[i]) for i in range(n)]
     cosine_va_vb = [cosine_similarity(velocity_vect_a[i], velocity_vect_b[i]) for i in range(n)]
+
+    avg_cos = mean(cosine_va_ab)
 
     # print("coor_a \n", coor_a)
     # print("coor_b \n", coor_b)
@@ -120,18 +134,32 @@ def get_follow_relation(track_a: dict, track_b: dict):
     # check position (A behind B or B behind A)
     position_state = []
     for i in range(n):
-        if cosine_va_ab[i] > 0:
+        x, y = velocity_vect_a[i]
+        if x**2 + y**2 <= DISTANCE_THRES:
+            position_state.append(PositionState.NO_RELATION)
+            continue
+
+        if cosine_va_ab[i] >= pos_thres:
             position_state.append(PositionState.A_BEHIND_B)
-        else:
+        elif cosine_va_ab[i] <= -pos_thres:
             position_state.append(PositionState.B_BEHIND_A)
-        pass
+        else:
+            position_state.append(PositionState.NO_RELATION)
     
     # check relation (A folow B or B follow A or no relation)
+    # follow_state = {
+    #     FollowState.NO_RELATION: 0,
+    #     FollowState.A_FOLLOW_B: 0,
+    #     FollowState.B_FOLLOW_A: 0
+    # }
+
     follow_state = []
     follow_state_counter = Counter()
     for i in range(n):
+        if position_state[i] == PositionState.NO_RELATION:
+            continue
         if position_state[i] == PositionState.A_BEHIND_B:
-            if (not (cosine_va_vb[i] >= VELOCITY_COSINE_THRES)) or abs(cosine_va_ab[i]) < DISTANCE_COSINE_THRES:
+            if (not (cosine_va_vb[i] >= v_thres)) or abs(cosine_va_ab[i]) < traj_thres:
                 follow_state.append(FollowState.NO_RELATION)
                 follow_state_counter.update(FollowState.NO_RELATION)
             else:
@@ -141,7 +169,7 @@ def get_follow_relation(track_a: dict, track_b: dict):
 
         if position_state[i] == PositionState.B_BEHIND_A:
             # if abs(cosine_vb_ab[i]) < FOLLOW_COSINE_THRES:
-            if (not (cosine_va_vb[i] >= VELOCITY_COSINE_THRES)) or abs(cosine_va_ab[i]) < DISTANCE_COSINE_THRES:
+            if (not (cosine_va_vb[i] >= v_thres)) or abs(cosine_va_ab[i]) < traj_thres:
                 follow_state.append(FollowState.NO_RELATION)
                 follow_state_counter.update(FollowState.NO_RELATION)                
             else:
@@ -149,8 +177,12 @@ def get_follow_relation(track_a: dict, track_b: dict):
                 follow_state_counter.update(FollowState.B_FOLLOW_A)
             pass
         pass
-
-    return follow_state_counter.get_famous_value()
+    
+    if follow_state_counter.find_longest_state(FollowState.B_FOLLOW_A) >= FOLLOW_STATE_THRES and follow_state_counter.find_longest_state(FollowState.A_FOLLOW_B) >= FOLLOW_STATE_THRES:
+        ans = FollowState.NO_RELATION
+    else:
+        ans = follow_state_counter.get_famous_value()
+    return ans, avg_distance, avg_cos
 
 def get_longest_tracklet(track_map: dict):
     longest_track_id = None
@@ -175,27 +207,62 @@ def find_all_follow_relation(val_id, data):
         "subject": [sub_key],
         "follow": [],
         "follow_by": [],
+        "num_frames": data["n_frames"]
     }
     print(val_id, sub_key)
-    for key in list_track_ids:
-        if key == sub_key:
-            continue
-        isFollow = get_follow_relation(track_map[sub_key], track_map[key])
-        # print(key, isFollow)
-        if isFollow == FollowState.A_FOLLOW_B:
-            ans["follow"].append(key)
-        elif isFollow == FollowState.B_FOLLOW_A:
-            ans["follow_by"].append(key)
-        if isFollow != FollowState.NO_RELATION:
-            print(key, isFollow)
-        # input()
-        pass
+    ans_follow = []
+    ans_follow_by = []
+    for max_thres_traj in MAX_TRAJ_THRES_LEVEL:
+        for thres in THRES_LEVEL:
+            if len(ans["follow"]) and len(ans["follow_by"]):
+                break
+            sub_ans_follow = []
+            sub_ans_follow_by = []
+            for key in list_track_ids:
+                if key == sub_key:
+                    continue
+                if key in data["stop_tracks"]:
+                    continue
+                isFollow, avg_distance, avg_cos = get_follow_relation(track_map[sub_key], track_map[key], pos_thres=math.cos(math.pi/15), v_thres=thres, traj_thres=max_thres_traj)
+                # print(key, isFollow)
+                if isFollow == FollowState.A_FOLLOW_B and not ans_follow:
+                    sub_ans_follow.append({
+                        "key": key,
+                        "avg_dist": avg_distance,
+                        "avg_cos": avg_cos
+                        })
+    
+                elif isFollow == FollowState.B_FOLLOW_A and not ans_follow_by:
+                    sub_ans_follow_by.append({
+                        "key": key,
+                        "avg_dist": avg_distance,
+                        "avg_cos": avg_cos
+                        })
+                # input()
+                pass
+            if sub_ans_follow:
+                ans_follow.extend(sub_ans_follow)
+            if sub_ans_follow_by:
+                ans_follow_by.extend(sub_ans_follow_by)
+    
+    if len(ans_follow) >= 1:
+        min_dist_key = min(ans_follow, key=lambda d: d['avg_dist'])["key"]
+        max_cos_key = max(ans_follow, key=lambda d: d['avg_cos'])["key"]
+        ans["follow"].extend(list(set([min_dist_key, max_cos_key])))
+    
+    if len(ans_follow_by) >= 1:
+        min_dist_key = min(ans_follow_by, key=lambda d: d['avg_dist'])["key"]
+        min_cos_key = min(ans_follow_by, key=lambda d: d['avg_cos'])["key"]
+        ans["follow_by"].extend(list(set([min_dist_key, min_cos_key])))
+
+    print("follow: ", ans["follow"])
+    print("follow_by: ", ans["follow_by"])
     return ans
 
 
 def main():
-    stop_detector = StopDetector()
-    json_data = get_potential_track(TRAIN_TRACKING_RESULT)
+    stop_detector = StopDetector() 
+    json_data = get_potential_track(TEST_TRACKING_RESULT)
     count = 0
     ans = []
     for val_id, data in tqdm(json_data):
@@ -205,11 +272,11 @@ def main():
         visualize(data, None, DATA_DIR, SAVE_DIR_VIDEO, row_dict, val_id)
         ans.append(row_dict)
         count += 1
-        if (count >= 10):
-            break
+        # if (count >= 10):
+        #     break
 
     ans_df = pd.DataFrame(data=ans)
-    ans_df.to_csv(osp.join(SAVE_DIR_CSV, "ans_June3_1h27.csv"), index=False)
+    ans_df.to_csv(osp.join(SAVE_DIR_CSV, "ans.csv"), index=False)
 
     # if json_data is None:
     #     print(f'No data available')

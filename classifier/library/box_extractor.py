@@ -7,8 +7,7 @@ import torch
 from torch import nn 
 from torchvision import transforms
 
-from classifier.EfficientNet_PyTorch.efficientnet_pytorch import EfficientNet
-# from efficientnet_pytorch import EfficientNet
+from classifier.models.efficientnet_pytorch import EfficientNet
 from classifier.utils import preprocess_input
 
 class BoxClassifier(nn.Module):
@@ -23,7 +22,7 @@ class BoxClassifier(nn.Module):
             nn.Flatten()
         )
         self.classifier = nn.Sequential(
-            nn.Dropout(0.5),
+            nn.Dropout(0.4),
             nn.Linear(out_channel, cfg['NUM_CLASSES'])
         )
 
