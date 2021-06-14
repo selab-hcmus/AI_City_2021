@@ -6,20 +6,20 @@ from tqdm import tqdm
 import torch 
 from classifier.box_extractor import init_model
 from classifier.config import cfg_veh, cfg_col
-from classifier.utils import get_feat_from_subject_box, get_feat_from_model
+from classifier.utils import (
+    get_feat_from_subject_box, get_feat_from_model, 
+    CLASSIFIER_SAVE_DIR
+)
 
-from utils import pickle_save, json_load
-from dataset.data_manager import test_track_map, train_track_map
+from utils import pickle_save, json_load, DATA_DIR
+from utils.data_manager import test_track_map, train_track_map
 
 ## GLOBAL VARIABLES
-# ROOT_DIR = '/content/AIC21_Track5_NL_Retrieval'
-# ROOT_DIR = '/scratch/ntphat/dataset'
 ## Use this below code when you have placed the dataset folder inside this project
-ROOT_DIR = '/home/ntphat/projects/AI_City_2021/dataset'
-
+ROOT_DIR = DATA_DIR
 # SAVE_DIR = '/scratch/ntphat/results'
 MODEL_ID = 'May31_uptrain'
-SAVE_DIR = f'./results/{MODEL_ID}'
+SAVE_DIR = osp.join(CLASSIFIER_SAVE_DIR, MODEL_ID)
 
 TRAIN_TRACK_JSON = './data/Centernet2_train_veh_boxes.json'
 TEST_TRACK_JSON = './data/Centernet2_test_veh_boxes.json'

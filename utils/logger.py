@@ -1,7 +1,7 @@
 import logging
 import sys
 
-def create_logger(name: str='aic21', filepath: str=None, level: int=logging.INFO, stdout=False):
+def create_logger(filepath: str=None, name: str='aic21', level: int=logging.INFO, stdout=True):
     logger = logging.getLogger(name)
     logger.setLevel(level)
     

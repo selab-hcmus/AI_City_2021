@@ -2,14 +2,27 @@ import numpy as np
 
 def filter_track_veh_preds(preds, veh_thres=0.8, weight=None):
     list_preds = (preds >= veh_thres).astype(np.int)
+
     n_box = preds.shape[0]
     if weight is None:
         weight = np.ones(n_box, dtype=np.float)
     
     final_preds = np.sum(preds*weight[:, None], axis=0)/np.sum(weight)
-    final_preds = (final_preds >= veh_thres).astype(np.int)
+    
+    flag = None
+    for thres in [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3]:
+        temp =  (final_preds >= thres).astype(np.int)
+        is_all_zero = np.all((temp == 0))
+        if not is_all_zero:
+            flag = thres
+            break
 
-    return list_preds.tolist(), final_preds.tolist()
+    if flag is None:
+        final_preds = (final_preds > 1.0).astype(np.int)
+    else:
+        final_preds = (final_preds >= flag).astype(np.int)
+    
+    return list_preds.tolist(), final_preds.tolist(), flag
 
 def filter_track_col_preds(preds, veh_thres=0.8, weight=None):
     list_preds = (preds >= veh_thres).astype(np.int)

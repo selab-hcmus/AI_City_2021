@@ -2,18 +2,23 @@ import os
 import os.path as osp
 from tqdm import tqdm
 
-from utils import json_load, json_save
+from utils import json_load, json_save, AverageMeter
 from object_tracking.library import VideoResult, TrackResult
 from object_tracking.test.test_utils import SAVE_DIR, calculate_iou, calculate_distance
-track_res_dir = osp.join(SAVE_DIR, 'test_deepsort_v4-1', 'json_subject')
-save_dir = osp.join(SAVE_DIR, 'test_deepsort_v4-1', 'json_stop')
-os.makedirs(save_dir)
 
-STOP_IOU_THRES = 0.6
-def is_track_stop(track_data: TrackResult):
-    first_box = track_data.boxes[0]
-    last_box = track_data.boxes[-1]
-    if calculate_iou(last_box, first_box) > STOP_IOU_THRES:
+
+STOP_IOU_THRES = 0.4
+def is_track_stop(track_data: TrackResult, k=3):
+    meter = AverageMeter()
+    n = min(k, len(track_data.boxes)//2)
+    first_boxes = track_data.boxes[:n]
+    last_boxes = track_data.boxes[-n:]
+    for i in range(n):
+        first_box = first_boxes[i]
+        last_box = last_boxes[n-1-i]
+        meter.update(calculate_iou(last_box, first_box))
+    
+    if meter.avg > STOP_IOU_THRES:
         return True
     return False
 
@@ -26,21 +31,35 @@ def find_stop_track(video_data: VideoResult):
     return stop_tracks
 
 def main():
+    VISUALIZE=False
+    mode='pkl'
+
+    track_res_dir = osp.join(SAVE_DIR, 'test_deepsort_v4-3', f'{mode}_subject')
+    save_dir = osp.join(SAVE_DIR, 'test_deepsort_v4-3', f'{mode}_stop')
+    vid_save_dir = osp.join(SAVE_DIR, 'test_deepsort_v4-3', 'video_stop')
+    os.makedirs(save_dir, exist_ok=True)
+    os.makedirs(vid_save_dir, exist_ok=True)
+
+    print(f'Save files to {save_dir}')
     list_files = os.listdir(track_res_dir)
-    # list_ids = [407]
-    # list_files = [f'{i}.json' for i in list_ids]
+    # list_files = [f'{i}.{mode}' for i in list_ids]
     for fname in tqdm(list_files):
         inp = osp.join(track_res_dir, fname)
+        track_id = fname.split('.')[0]
+        save_path = osp.join(save_dir, fname)
+        # if osp.isfile(save_path):
+        #     continue
+        
         vid_data = VideoResult(inp)
         stop_tracks = find_stop_track(vid_data)
-        # print(f"subject: {vid_data.subject}")
-        # print(f'{fname}: {stop_tracks} stop')
-
-        save_path = osp.join(save_dir, fname)
-        old_data = json_load(inp)
-        old_data['stop_tracks'] = stop_tracks
-        json_save(old_data, save_path)
-
+        vid_data.set_stop_tracks(stop_tracks)
+        vid_data.to_json(save_path, is_feat=(mode=='pkl'))
+        
+        if VISUALIZE:
+            vid_save_path = osp.join(vid_save_dir, f'{track_id}.avi')
+            # if osp.isfile(vid_save_path):
+            #     continue
+            vid_data.visualize(vid_save_path)
         pass
     pass 
 

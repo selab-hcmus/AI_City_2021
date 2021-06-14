@@ -4,16 +4,16 @@ Experiments are in subject_v*.py files
 from numpy.lib.npyio import savez_compressed
 import pandas as pd
 from types import new_class
-from dataset.data_manager import train_track_map, test_query_map
+from utils.data_manager import train_track_map, test_query_map
 from utils import json_load, json_save, AverageMeter
 from object_tracking.test.test_utils import calculate_iou, calculate_distance, is_box_in_box
 
-TRAIN_SRL_DIR = '/home/ntphat/projects/AI_City_2021/srl_handler/results/train_srl'
-TRAIN_SVO_KEYS = '/home/ntphat/projects/AI_City_2021/srl_handler/results/train_stat.json'
-TEST_SVO_KEYS = '/home/ntphat/projects/AI_City_2021/srl_handler/results/test_stat.json'
+TRAIN_SRL_DIR = '/content/AI_City_2021/srl_handler/results/train_srl'
+TRAIN_SVO_KEYS = '/content/AI_City_2021/srl_handler/results/train_stat.json'
+TEST_SVO_KEYS = '/content/AI_City_2021/srl_handler/results/test_stat.json'
 
-train_svo_data = json_load(TRAIN_SVO_KEYS)
-TRAIN_SVO_IDS = train_svo_data['svo_query']
+# train_svo_data = json_load(TRAIN_SVO_KEYS)
+# TRAIN_SVO_IDS = train_svo_data['svo_query']
 # TRAIN_SVO_IDS = [str(i) for i in TRAIN_SVO_IDS]
 
 ACCEPT_IOU_THRES = 0.6
@@ -27,8 +27,8 @@ def evaluate(gt_boxes: list, cand_tracks: list):
             'score': 0, 'iou_avg': -1, 'dist_avg': -1, 'start_frame': -1, 'end_frame': -1,
         }
         iou_meter, dist_meter = AverageMeter(), AverageMeter()
-        start_frame = -1
-        end_frame = -1
+        start_frame = track.frame_order[0]
+        end_frame = track.frame_order[-1]
         for i, frame_idx in enumerate(track.frame_order):
             track_box = track.boxes[i]
             gt_box = gt_boxes[frame_idx]
@@ -43,9 +43,9 @@ def evaluate(gt_boxes: list, cand_tracks: list):
             dist = calculate_distance(gt_box, track_box)
             
             if (iou > ACCEPT_IOU_THRES): #or (inside == True):
-                if start_frame == -1:
-                    start_frame = frame_idx
-                end_frame = frame_idx
+                # if start_frame == -1:
+                #     start_frame = frame_idx
+                # end_frame = frame_idx
                 track_res['score'] += 1
                 
             iou_meter.update(iou)

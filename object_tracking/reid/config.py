@@ -2,8 +2,8 @@ import os
 import os.path as osp
 
 
-WEIGHT_DIR = '/home/ntphat/projects/AI_City_2021/object_tracking/reid/weights'
-MODEL_NAME = 'resnet50_ibn_a'
+WEIGHT_DIR = '/content/AI_City_2021/object_tracking/reid/weights/Resnet101-ibna.pth.tar-42'
+MODEL_NAME = 'resnet101_ibn_a'
 
 # Model config
 

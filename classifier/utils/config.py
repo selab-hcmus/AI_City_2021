@@ -2,6 +2,10 @@ import datetime
 import os
 import os.path as osp 
 
+# from utils import RESULT_DIR
+RESULT_DIR = '/content/AI_City_2021/results'
+CLASSIFIER_SAVE_DIR = osp.join(RESULT_DIR, 'classifier')
+
 VEH_CLASS_MAP = {
     0: 'sedan',
     1: 'suv',
@@ -29,17 +33,17 @@ CONFIG = {
     "imagenet_std":[0.229, 0.224, 0.225],
     'score_thres': 0.5,
     'seed': 88,
-    'uptrain': True,
+    'uptrain': False,
     
     'train': {
         'batch_size': 32,
-        'num_epochs': 10,
+        'num_epochs': 36,
     },
     'val':{
         'batch_size': 32,
     },
-    'date': "May31_uptrain", 
-    'save_path': "./results/classifier", #Training log will be saved at save_path/<mode>/date
+    'date': "June13_removemultilabel_changesedansuv", 
+    'save_path': CLASSIFIER_SAVE_DIR, #Training log will be saved at save_path/<mode>/date
     # 'loss': {
     #     'name': 'TSA_BceDiceLoss',
     #     'args': {
@@ -70,7 +74,7 @@ cfg_col = CONFIG.copy()
 
 cfg_veh.update({
     'NUM_CLASSES': 6,
-    'WEIGHT': f"/home/ntphat/projects/AI_City_2021/classifier/results/May31_uptrain/veh_best_model.pt",
+    'WEIGHT': osp.join(CLASSIFIER_SAVE_DIR, "June13_removemultilabel_changesedansuv/vehicle/best_model.pt"),
     "type": "vehicle",
     'output_type': 'one_hot',
     'class_map': {
@@ -91,7 +95,8 @@ cfg_veh.update({
 
 cfg_col.update({
     'NUM_CLASSES': 8,
-    'WEIGHT': "/home/ntphat/projects/AI_City_2021/classifier/results/col_classifier.pt",
+    # fix later
+    'WEIGHT': "/content/AI_City_2021/results/classifier/col_classifier.pt",
     "type": "color",
     'output_type': 'one_hot',
     'class_map': {

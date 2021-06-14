@@ -2,6 +2,7 @@ import os
 import os.path as osp
 import pickle 
 import cv2
+import math
 
 class PositionState:
     NO_RELATION = 0
@@ -18,11 +19,13 @@ class FollowState:
     }
     pass
 
-NUM_COUNT_THRES = 9
+NUM_COUNT_THRES = 4
+SUBSEQUENCE_THRES = 3
 
 class Counter(object):
     def __init__(self):
         self.counter = {}
+        self.trace = []
         self.total = 0
         self.famous_value = None
         self.max_count = 1
@@ -39,26 +42,43 @@ class Counter(object):
             self.famous_value = value 
 
         self.total += 1
-    
+        self.trace.append(value)
+
+    def find_longest_state(self, state_val):
+        count = 0
+        ans = 0
+        for val in self.trace:
+            if val == state_val:
+                count += 1
+                ans = max(ans, count)
+            else:
+                count = 0
+        return ans
+
     def get_famous_value(self):
         a_fl_b = self.counter.get(FollowState.A_FOLLOW_B, None)
         b_fl_a = self.counter.get(FollowState.B_FOLLOW_A, None)
+        ans = FollowState.NO_RELATION
         if a_fl_b is None and b_fl_a is None:
-            return FollowState.NO_RELATION
+            pass
         elif a_fl_b is None:
             if b_fl_a >= NUM_COUNT_THRES:
-                return FollowState.B_FOLLOW_A
-            return FollowState.NO_RELATION
+                ans = FollowState.B_FOLLOW_A
         elif b_fl_a is None:
             if a_fl_b >= NUM_COUNT_THRES:
-                return FollowState.A_FOLLOW_B
-            return FollowState.NO_RELATION
+                ans = FollowState.A_FOLLOW_B
         else:
             if a_fl_b >= b_fl_a:
-                return FollowState.A_FOLLOW_B
-            return FollowState.A_FOLLOW_B
+                ans = FollowState.A_FOLLOW_B
+            else:
+                ans = FollowState.B_FOLLOW_A
         # return self.famous_value
+
+        if ans != FollowState.NO_RELATION:
+            if self.find_longest_state(ans) < SUBSEQUENCE_THRES:
+                ans = FollowState.NO_RELATION
         
+        return ans
     pass
 
 def smooth_distance(list_dis: list, skip_frame: int = 5):
@@ -68,7 +88,10 @@ def smooth_distance(list_dis: list, skip_frame: int = 5):
     pass
 
 def minus_vector(vector_a, vector_b):
-    return [vector_b[0] - vector_a[0], vector_b[1] - vector_a[1]] 
+    return [vector_b[0] - vector_a[0], vector_b[1] - vector_a[1]]
+
+def length_vector(vector):
+    return math.sqrt(vector[0]**2 + vector[1]**2)
     
 def calculate_velocity_vector(coor: list, skip_frame=2, smooth_frame=2):
     if skip_frame > len(coor):

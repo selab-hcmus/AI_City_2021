@@ -3,6 +3,8 @@ import os.path as osp
 import json 
 
 DATA_DIR = '/content/AI_City_2021/dataset'
+RESULT_DIR = '/content/AI_City_2021/results'
+
 TRAIN_TRACK_JSON = osp.join(DATA_DIR, 'data/train-tracks.json')
 TEST_TRACK_JSON = osp.join(DATA_DIR, 'data/test-tracks.json')
 TEST_QUERY_JSON = osp.join(DATA_DIR, 'data/test-tracks.json')

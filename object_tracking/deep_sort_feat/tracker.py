@@ -66,6 +66,9 @@ class Tracker:
         # Run matching cascade.
         matches, unmatched_tracks, unmatched_detections = self._match(detections)
 
+        # for track_idx, detection_idx in matches:
+        #     print(f'{track_idx} update box {detection_idx}')
+
         # Update track set.
         for track_idx, detection_idx in matches:
             self.tracks[track_idx].update(detections[detection_idx])
@@ -116,22 +119,22 @@ class Tracker:
                 gated_metric, self.metric.matching_threshold, self.max_age,
                 self.tracks, detections, confirmed_tracks)
 
-        return matches_a, unmatched_tracks_a, unmatched_detections
-        # # Associate remaining tracks together with unconfirmed tracks using IOU.
-        # iou_track_candidates = unconfirmed_tracks + [
-        #     k for k in unmatched_tracks_a if
-        #     self.tracks[k].time_since_update == 1]
-        # unmatched_tracks_a = [
-        #     k for k in unmatched_tracks_a if
-        #     self.tracks[k].time_since_update != 1]
-        # matches_b, unmatched_tracks_b, unmatched_detections = \
-        #     linear_assignment.min_cost_matching(
-        #         iou_matching.iou_cost, self.max_iou_distance, self.tracks,
-        #         detections, iou_track_candidates, unmatched_detections)
+        # return matches_a, unmatched_tracks_a, unmatched_detections
 
-        # matches = matches_a + matches_b
-        # unmatched_tracks = list(set(unmatched_tracks_a + unmatched_tracks_b))
-        # return matches, unmatched_tracks, unmatched_detections
+        # Associate remaining tracks together with unconfirmed tracks using IOU.
+        iou_track_candidates = unconfirmed_tracks + [
+            k for k in unmatched_tracks_a if self.tracks[k].time_since_update == 1]
+        unmatched_tracks_a = [
+            k for k in unmatched_tracks_a if self.tracks[k].time_since_update != 1]
+            
+        matches_b, unmatched_tracks_b, unmatched_detections = \
+            linear_assignment.min_cost_matching(
+                iou_matching.iou_cost, self.max_iou_distance, self.tracks,
+                detections, iou_track_candidates, unmatched_detections)
+
+        matches = matches_a + matches_b
+        unmatched_tracks = list(set(unmatched_tracks_a + unmatched_tracks_b))
+        return matches, unmatched_tracks, unmatched_detections
 
     def _initiate_track(self, detection):
         self.tracks.append(

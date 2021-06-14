@@ -2,7 +2,7 @@ import os
 import os.path as osp
 from tqdm import tqdm
 import json
-from dataset.data_manager import (
+from utils.data_manager import (
     test_track_map, train_track_map
 )
 

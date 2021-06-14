@@ -12,12 +12,12 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 from sklearn.model_selection import StratifiedKFold
 
-from efficientnet_pytorch import EfficientNet
 from classifier.utils.config import CONFIG
 
-VEH_TRAIN_CSV = '../srl_handler/results/veh_train_fraction_new_edited29May.csv'
-VEH_GROUP_JSON = '../srl_handler/data/vehicle_group_v1.json'
-VEH_BOX_DIR = './data/veh_boxes'
+VEH_TRAIN_CSV = '/content/AI_City_2021/srl_handler/results/veh_train_change_weight_label_June13.csv'
+VEH_TEST_CSV = "/content/AI_City_2021/srl_handler/results/veh_test_label_change_label_June13_9h40.csv"
+VEH_GROUP_JSON = '/content/AI_City_2021/srl_handler/data/vehicle_group_v1.json'
+VEH_BOX_DIR = '/content/AI_City_2021/classifier/data/veh_boxes'
 
 COL_TRAIN_CSV = '/content/SOURCE/extract_object/data/COLOR/train_fraction.csv'
 COL_GROUP_JSON = '/content/SOURCE/extract_object/data/COLOR/color_group_v1.json'
@@ -79,11 +79,22 @@ class VehicleDataset(Dataset):
 
 #TODO: veh_box_v1, col_box_v3 --> choose new_dir
 
+def replace_box_dir(cur_dir: str, list_dir):
+    for item in list_dir:
+        if item in cur_dir:
+            cur_dir = cur_dir.replace(item, "")
+            break
+    return cur_dir
+
+def add_root_dir(cur_dir: str, root_dir):
+    cur_dir = osp.join(root_dir, cur_dir)
+    return cur_dir
+
 def get_dataset(csv_path: str, group_json: str, box_data_dir):
-    def replace_box_dir(cur_dir: str):
+    def inner_replace_box_dir(cur_dir: str):
         if box_data_dir == VEH_BOX_DIR:
-            list_dir = ['/home/ntphat/projects/aic21/aic2021/results/veh_class_2/train',
-                        '/Users/ntphat/Documents/THESIS/SOURCE/aic2021/results/veh_class/train'
+            list_dir = ['/home/ntphat/projects/aic21/aic2021/results/veh_class_2/train/',
+                        '/Users/ntphat/Documents/THESIS/SOURCE/aic2021/results/veh_class/train/'
                         ]
             for item in list_dir:
                 if item in cur_dir:
@@ -95,7 +106,7 @@ def get_dataset(csv_path: str, group_json: str, box_data_dir):
         return cur_dir 
 
     df_full = pd.read_csv(csv_path)
-    df_full['paths'] = df_full['paths'].apply(replace_box_dir)
+    df_full['paths'] = df_full['paths'].apply(inner_replace_box_dir)
     print("Replaced box dir successfully")
 
     df_filtered = df_full.drop_duplicates(subset='query_id', keep="first")

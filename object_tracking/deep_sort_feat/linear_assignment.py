@@ -9,9 +9,8 @@ from . import kalman_filter
 INFTY_COST = 1e+5
 
 
-def min_cost_matching(
-        distance_metric, max_distance, tracks, detections, track_indices=None,
-        detection_indices=None):
+def min_cost_matching(distance_metric, max_distance, tracks, detections, 
+        track_indices=None,detection_indices=None):
     """Solve linear assignment problem.
 
     Parameters
@@ -55,16 +54,18 @@ def min_cost_matching(
 
     cost_matrix = distance_metric(
         tracks, detections, track_indices, detection_indices)
-    cost_matrix[cost_matrix > max_distance] = max_distance + 1e-5
+    # cost_matrix[cost_matrix > max_distance] = max_distance + 1e-5
     indices = linear_assignment(cost_matrix)
 
     matches, unmatched_tracks, unmatched_detections = [], [], []
     for col, detection_idx in enumerate(detection_indices):
         if col not in indices[:, 1]:
             unmatched_detections.append(detection_idx)
+
     for row, track_idx in enumerate(track_indices):
         if row not in indices[:, 0]:
             unmatched_tracks.append(track_idx)
+    
     for row, col in indices:
         track_idx = track_indices[row]
         detection_idx = detection_indices[col]
@@ -73,6 +74,7 @@ def min_cost_matching(
             unmatched_detections.append(detection_idx)
         else:
             matches.append((track_idx, detection_idx))
+    
     return matches, unmatched_tracks, unmatched_detections
 
 
@@ -126,8 +128,7 @@ def matching_cascade(
             break
 
         track_indices_l = [
-            k for k in track_indices
-            if tracks[k].time_since_update == 1 + level
+            k for k in track_indices if tracks[k].time_since_update == 1 + level
         ]
         if len(track_indices_l) == 0:  # Nothing to match at this level
             continue

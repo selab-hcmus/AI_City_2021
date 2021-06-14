@@ -4,7 +4,7 @@ import os.path as osp
 import cv2
 from tqdm import tqdm
 
-from dataset.data_manager import (
+from utils.data_manager import (
     train_track_map, test_track_map, 
     # DATA_DIR
 )
@@ -17,16 +17,18 @@ from config import (
 
 extractor = FeatureExtractor(
     model_name=MODEL_NAME,
-    model_path=osp.join(WEIGHT_DIR, MODEL_NAME, 'model.pth.tar-25'),
+    model_path=WEIGHT_DIR,#osp.join(WEIGHT_DIR, MODEL_NAME, 'model.pth.tar-25'),
     device='cuda'
 )
 
-SAVE_DIR = '/home/ntphat/projects/AI_City_2021/object_tracking/reid/results'
-TRAIN_TRACK_JSON = '/home/ntphat/projects/AI_City_2021/classifier/data/Centernet2_train_veh_order.json'
-TEST_TRACK_JSON = '/home/ntphat/projects/AI_City_2021/classifier/data/Centernet2_test_veh_order.json'
-DATA_DIR = '/scratch/ntphat/dataset'
+SAVE_DIR = '/content/AI_City_2021/object_tracking/reid/results'
+TRAIN_TRACK_JSON = '/content/AI_City_2021/classifier/data/Centernet2_train_veh_order.json'
+TEST_TRACK_JSON = '/content/AI_City_2021/classifier/data/Centernet2_test_veh_order.json'
+# DATA_DIR = '/scratch/ntphat/dataset'
+DATA_DIR = '/content/AI_City_2021/dataset'
 SAVE_PERIOD = 10
 
+os.makedirs(SAVE_DIR, exist_ok=True)
 train_track = json.load(open(TRAIN_TRACK_JSON))
 test_track = json.load(open(TEST_TRACK_JSON))
 data_track = {'train': train_track, 'test': test_track}
@@ -43,7 +45,7 @@ def extract_feature(data_track, data_dir, mode_save_dir: str):
     count = 1
     list_keys = list(data_track.keys())
     print(f'Extract {len(list_keys)} tracks')
-    for key_track in list_keys:
+    for key_track in tqdm(list_keys):
         count += 1
         track_save_path = osp.join(mode_save_dir, f'{key_track}.pkl')
         if osp.isfile(track_save_path):
@@ -66,7 +68,7 @@ def extract_feature(data_track, data_dir, mode_save_dir: str):
             
             track_feat[frame_path] = extractor(list_boxes).detach().cpu().numpy()
         
-        print(f'Extract {count}th')
+        # print(f'Extract {count}th')
         pickle_save(track_feat, track_save_path)
         feat[key_track] = track_feat
 
@@ -84,11 +86,12 @@ def test():
 if __name__ == '__main__':
     # test()
 
-    for mode in ["train", "test"]:
-    # for mode in ["test"]:
+    # for mode in ["train", "test"]:
+    for mode in ["test"]:
         print(f"Extract in {mode} data")
         save_path = osp.join(SAVE_DIR, f'{mode}_feat.pkl')
-        mode_save_dir = osp.join(SAVE_DIR, f'{mode}_feat_tracking')
+        mode_save_dir = osp.join(SAVE_DIR, f'{mode}_feat_resnet101_ibn_a')
+        print(f'Save result to {mode_save_dir}')
         os.makedirs(mode_save_dir, exist_ok=True)
 
         feat = extract_feature(data_track[mode], DATA_DIR, mode_save_dir)

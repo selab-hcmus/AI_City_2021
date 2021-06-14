@@ -7,7 +7,7 @@ from multiprocessing import Pool
 import shutil
 import logging
 
-from dataset.data_manager import (
+from utils.data_manager import (
     test_track_map, train_track_map, DATA_DIR,
     TRAIN_TRACK_ORDER_JSON, TEST_TRACK_ORDER_JSON
 )

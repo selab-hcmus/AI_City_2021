@@ -7,22 +7,31 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import PIL
 from PIL import Image
+import sys
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 
+from utils import create_logger
 from classifier.library.box_extractor import init_model
 from classifier.utils.config import cfg_veh, cfg_col
-
 from classifier.library.dataset import (
     VehicleDataset, get_dataset,
+    replace_box_dir, add_root_dir,
     VEH_TRAIN_CSV, COL_TRAIN_CSV,
+    VEH_TEST_CSV,
     VEH_GROUP_JSON, COL_GROUP_JSON,
     VEH_BOX_DIR, COL_BOX_DIR,
 ) 
 import classifier.library.loss as loss
 from classifier.utils import scan_data, evaluate_fraction, evaluate_tensor, train_model
+
+# PHAT: hard code
+if len(sys.argv) > 1:
+    cfg_veh['date'] = sys.argv[1]
+    cfg_veh['MODEL'] = sys.argv[2]
 
 UP_TRAIN = cfg_veh['uptrain']
 if UP_TRAIN:
@@ -35,9 +44,18 @@ col_model = col_model.cuda()
 
 
 def train_model_type(model, cfg, csv_path: str, json_path: str, box_dir: str, up_train:bool=False):
-    df_train, df_val, df_full = get_dataset(csv_path, json_path, box_dir)
-    if up_train:
-        df_train = df_full
+    # df_train, df_val, df_full = get_dataset(csv_path, json_path, box_dir)
+    # if up_train:
+    #     df_train = df_full
+    df_train = pd.read_csv(VEH_TRAIN_CSV)
+    list_dir = ['/home/ntphat/projects/aic21/aic2021/results/veh_class_2/train/',
+                '/Users/ntphat/Documents/THESIS/SOURCE/aic2021/results/veh_class/train/'
+                ]
+    df_train['paths'] = df_train['paths'].apply(replace_box_dir, args=(list_dir, ))
+    df_train['paths'] = df_train['paths'].apply(add_root_dir, args=(VEH_BOX_DIR, ))
+
+    df_val = pd.read_csv(VEH_TEST_CSV)
+    df_val['paths'] = df_val['paths'].apply(add_root_dir, args=("/content/AI_CITY_2021/EXTRACTED_DATA/LABEL_TEST_SET",))
 
     train_dataset = VehicleDataset(df_train, 'train')
     val_dataset = VehicleDataset(df_val, 'val')
@@ -51,6 +69,11 @@ def train_model_type(model, cfg, csv_path: str, json_path: str, box_dir: str, up
     sample = train_dataset[0]
     for k in sample.keys():
         print(f'{k} shape: {sample[k].shape}')
+    
+    save_path = osp.join(cfg['save_path'], cfg['date'], cfg['type'])
+    os.makedirs(save_path, exist_ok=True)
+    logger = create_logger(osp.join(save_path, f"train_{cfg['type']}.log"))
+    logger.info(f'Save model to {save_path}')
 
     scan_data(train_dataloader, name='Train')
     scan_data(val_dataloader, name='Val')
@@ -66,16 +89,12 @@ def train_model_type(model, cfg, csv_path: str, json_path: str, box_dir: str, up
     dataloaders = {}
     dataloaders['train'] = train_dataloader
     dataloaders['val'] = val_dataloader
-
-    save_path = osp.join(cfg['save_path'], cfg['date'], cfg['type'])
-    os.makedirs(save_path, exist_ok=True)
-    print(f'Save model to {save_path}')
     
     df_train.to_csv(osp.join(save_path, "train_df.csv"), index = False)
     df_val.to_csv(osp.join(save_path, "val_df.csv"), index = False)
 
     model, val_acc, train_acc = train_model(
-        model, dataloaders, 
+        model, logger, dataloaders, 
         criterion, optimizer, lr_scheduler, 
         num_epochs=cfg['train']['num_epochs'], 
         save_path=save_path

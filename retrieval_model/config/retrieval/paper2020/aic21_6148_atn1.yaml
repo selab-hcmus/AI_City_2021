@@ -10,8 +10,8 @@ train:
         weight_high: 1.0
         weight_high_internal: 1.0
         weight_low: 1.0
-        weight_low_internal: 1.0
-        weight_context: 1.0
+        weight_low_internal: 1.0 # weight for vid cluster loss
+        weight_context: 1.0 # weight for vid-par align loss
         weight_context_internal: 0.0
     loss_cycle_cons: 0.0
     clip_gradient: -1

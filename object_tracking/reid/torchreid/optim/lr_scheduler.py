@@ -46,7 +46,7 @@ def build_lr_scheduler(
             )
 
         scheduler = torch.optim.lr_scheduler.StepLR(
-            optimizer, step_size=stepsize, gamma=gamma
+            optimizer, step_size=stepsize, gamma=gamma, verbose=True
         )
 
     elif lr_scheduler == 'multi_step':
@@ -57,12 +57,12 @@ def build_lr_scheduler(
             )
 
         scheduler = torch.optim.lr_scheduler.MultiStepLR(
-            optimizer, milestones=stepsize, gamma=gamma
+            optimizer, milestones=stepsize, gamma=gamma, verbose=True
         )
 
     elif lr_scheduler == 'cosine':
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer, float(max_epoch)
+            optimizer, float(max_epoch), verbose=True
         )
 
     return scheduler
