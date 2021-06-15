@@ -13,13 +13,14 @@ from utils.data_manager import (
     train_track_map, test_track_map
 )
 from object_tracking.library import VideoResult, TrackResult
-from object_tracking.test.test_utils import calculate_iou, SAVE_DIR
+from object_tracking.test.test_utils import calculate_iou
+from object_tracking.utils import SAVE_DIR
 
 sub_json_dir = osp.join(SAVE_DIR, 'test_deepsort_v4-1/json_subject')
-mask_save_dir = osp.join(SAVE_DIR, 'test_deepsort_v4-1/attn_mask')
+mask_save_dir = osp.join(SAVE_DIR, 'attn_mask')
 
-npy_save_dir = osp.join(mask_save_dir, 'npy_1')
-vid_save_dir = osp.join(mask_save_dir, 'video_1')
+npy_save_dir = osp.join(mask_save_dir, 'npy')
+vid_save_dir = osp.join(mask_save_dir, 'video')
 os.makedirs(mask_save_dir, exist_ok=True)
 os.makedirs(npy_save_dir, exist_ok=True)
 os.makedirs(vid_save_dir, exist_ok=True)
@@ -97,12 +98,6 @@ def refine_boxes(list_fids, list_boxes):
                 )
                 
                 res += (list_boxes[latest_idx : i+1] + new_boxes)
-                # print(f'len list_boxes: {len(list_boxes)}')
-                # print(f'latest_idx: {latest_idx}')
-                # print(f'i+1: {i+1}')
-                # print(f'len split boxes: {len(list_boxes[latest_idx : i+1])}')
-                # print(f'len(new_boxes): {len(new_boxes)}')
-                # print(f'N box: {len(res)}')
                 latest_idx = i+1
                 pass # Interpolate box
     
@@ -170,17 +165,17 @@ def main():
         #     continue 
 
         track_json_path = osp.join(sub_json_dir, f'{new_id}.json')
-        track_res = VideoResult(track_json_path)
+        # track_res = VideoResult(track_json_path)
 
         vid_data = test_data[track_id]
         vid_attn_mask, is_interpolate = get_attn_mask(vid_data)
         # vid_attn_mask = np.load(mask_save_path)
         np.save(mask_save_path, vid_attn_mask)
         # if is_interpolate:
-        if VISUALIZE:
-            track_res.visualize(vid_save_path, vid_attn_mask)
+        # if VISUALIZE:
+        #     track_res.visualize(vid_save_path, vid_attn_mask)
 
     pass
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()

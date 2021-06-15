@@ -1,10 +1,11 @@
-import datetime
 import os
 import os.path as osp 
 
-# from utils import RESULT_DIR
+from utils import DATA_DIR, RESULT_DIR
+
 RESULT_DIR = '/content/AI_City_2021/results'
 CLASSIFIER_SAVE_DIR = osp.join(RESULT_DIR, 'classifier')
+CLASSIFIER_DATA_DIR = osp.join(DATA_DIR, 'classifier')
 
 VEH_CLASS_MAP = {
     0: 'sedan',
@@ -74,7 +75,8 @@ cfg_col = CONFIG.copy()
 
 cfg_veh.update({
     'NUM_CLASSES': 6,
-    'WEIGHT': osp.join(CLASSIFIER_SAVE_DIR, "June13_removemultilabel_changesedansuv/vehicle/best_model.pt"),
+    # 'WEIGHT': osp.join(CLASSIFIER_SAVE_DIR, "June13_removemultilabel_changesedansuv/vehicle/best_model.pt"),
+    'WEIGHT': osp.join(CLASSIFIER_SAVE_DIR, 'veh_classifier.pt'),
     "type": "vehicle",
     'output_type': 'one_hot',
     'class_map': {
@@ -96,7 +98,7 @@ cfg_veh.update({
 cfg_col.update({
     'NUM_CLASSES': 8,
     # fix later
-    'WEIGHT': "/content/AI_City_2021/results/classifier/col_classifier.pt",
+    'WEIGHT': osp.join(CLASSIFIER_SAVE_DIR, 'col_classifier.pt'),
     "type": "color",
     'output_type': 'one_hot',
     'class_map': {

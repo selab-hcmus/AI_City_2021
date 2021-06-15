@@ -4,21 +4,19 @@ import cv2
 from tqdm import tqdm
 import numpy as np
 
-from utils import json_load, json_save, pickle_load, pickle_save
-from utils.data_manager import TEST_TRACK_JSON, test_track_map
+from utils import json_load, json_save, pickle_load, prepare_dir
+from utils.data_manager import test_track_map, TEST_TRACK_JSON, RESULT_DIR, DATA_DIR
 from object_tracking.utils import (
-    ROOT_DIR,
-    TRAIN_TRACK_DIR, TEST_TRACK_DIR,
-    get_img_name, get_gt_from_idx, get_closest_box, 
+    ROOT_DIR, SAVE_DIR, TRAIN_TRACK_DIR, TEST_TRACK_DIR,
+    get_img_name, get_gt_from_idx,
+    tracking_config
 )
-from object_tracking.tools import convert_video_track, visualize
-from object_tracking.test.test_utils import SAVE_DIR, ID_TO_COMPARE
-# from object_tracking.test.evaluate_subject import TRAIN_SVO_IDS
+from object_tracking.utils.attn_mask import get_attn_mask
+from object_tracking.tools import convert_video_track
 from object_tracking.library import TrackingManager
-from object_tracking.deepsort_feat import deepsort_rbc
 
 TEST_TRACK_ORDERS = list(test_track_map.values())
-ATTENTION_THRES = 0.3
+ATTENTION_THRES = tracking_config['ATTENTION_THRES']
 
 def concat_feat(vehcol_feats: list, reid_feats: list):
     new_feats = []
@@ -33,7 +31,7 @@ def get_detection_to_track(attn_mask: np.ndarray, detections: np.array):
         x, y, w, h = box
         area = w*h 
         mask_area = attn_mask[y: y+h+1, x: x+w+1, 0]
-        mask_area[np.where(mask_area <= 0.3)] = 0
+        mask_area[np.where(mask_area <= ATTENTION_THRES)] = 0
         overlap_ratio = np.sum(mask_area)/area
         
         if overlap_ratio > ATTENTION_THRES:
@@ -41,18 +39,14 @@ def get_detection_to_track(attn_mask: np.ndarray, detections: np.array):
     
     return chosen_ids
 
-def tracking(config: dict, ds_config: dict, json_save_dir: str, vis_save_dir: str, verbose=False):
+def tracking(config: dict, ds_config: dict, json_save_dir: str, mask_dir: str=None, vis_save_dir: str=None, verbose=False):
     mode_json_dir = json_save_dir
     gt_dict = json_load(config["track_dir"])
-    print(f'>> Run DeepSort on {config["mode"]} mode, save result to {mode_json_dir}')
-    mask_dir = config['mask_dir']
+    list_keys = list(gt_dict.keys())
 
-    for track_order in tqdm(config["list_keys"]):
-        track_order = str(track_order)
-        
-        save_json_path = osp.join(json_save_dir, f'{track_order}.pkl')
-        if osp.isfile(save_json_path):
-            continue
+    for track_order in tqdm(list_keys):
+        track_order = str(track_order)        
+        save_json_path = osp.join(json_save_dir, f'{track_order}.json')
 
         img_dict = gt_dict[track_order]
         img_names = get_img_name(img_dict)
@@ -67,7 +61,7 @@ def tracking(config: dict, ds_config: dict, json_save_dir: str, vis_save_dir: st
 
         ans = {}
         #Initialize deep sort.
-        deepsort = TrackingManager(ds_config) #deepsort_rbc()
+        deepsort = TrackingManager(ds_config) 
 
         if config["save_video"]:
             fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -76,15 +70,13 @@ def tracking(config: dict, ds_config: dict, json_save_dir: str, vis_save_dir: st
 
         frame = None
         for i in (range(len(img_names))):
-            img_path = osp.join(ROOT_DIR, img_names[i])
-
-            if i == 0 and config["save_video"]:
-                frame = cv2.imread(img_path)
-                frame = frame.astype(np.uint8)
+            img_path = osp.join(DATA_DIR, img_names[i])
+            frame = cv2.imread(img_path)
+            frame = frame.astype(np.uint8)
+            
+            if i == 0 and config["save_video"]:    
                 h, w, c = frame.shape
                 out = cv2.VideoWriter(save_visualize_path,fourcc, 1, (w,h))
-                # if osp.isfile(save_visualize_path):
-                #     continue
 
             detections, out_scores = get_gt_from_idx(i, gt_dict[track_order])# detections: list of xywh boxes
             detections = np.array(detections) 
@@ -95,6 +87,7 @@ def tracking(config: dict, ds_config: dict, json_save_dir: str, vis_save_dir: st
             new_feats = concat_feat(vehcol_features, reid_features)
             features = new_feats
             
+            # Load attention mask to remove unrelated objects
             if attn_mask is not None:
                 chosen_ids = get_detection_to_track(attn_mask, detections)
                 dets, scores, feats = [], [], []
@@ -106,7 +99,6 @@ def tracking(config: dict, ds_config: dict, json_save_dir: str, vis_save_dir: st
                 out_scores = np.array(scores)
                 features = np.array(feats)
 
-            
             # print('='*20 + f' Tracking step {i} ' + '='*20)
             tracker, detections_class = deepsort.run_deep_sort(out_scores, detections, features)
 
@@ -136,13 +128,9 @@ def tracking(config: dict, ds_config: dict, json_save_dir: str, vis_save_dir: st
                     cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),(255,255,0), 2)
                     cv2.putText(frame, str(id_num),(int(bbox[0]), int(bbox[1])),0, 5e-3 * 200, (0,255,0),2)
 
-
             ans[img_names[i]] = track_list
 
             if config["save_video"]:
-                # if attn_mask is not None:
-                #     attn_mask[np.where(attn_mask <= 0.3)] = 0.3
-                #     frame = (frame*attn_mask).astype(np.uint8)
                 out.write(frame)
         
         if config["save_video"]:
@@ -150,6 +138,7 @@ def tracking(config: dict, ds_config: dict, json_save_dir: str, vis_save_dir: st
         
         save_json_path = os.path.join(mode_json_dir, f'{track_order}.json')
         reformat_res = convert_video_track(ans, save_json_path, save_feat=config['save_feat'])
+    
     pass
 
 if __name__ == '__main__':
@@ -162,31 +151,32 @@ if __name__ == '__main__':
         # },
         "test": {
             "track_dir": TEST_TRACK_DIR,
-            "feat_dir": ["reid/results/test_feat_resnet101_ibn_a", "/content/AI_City_2021/results/classifier/test_feat_tracking"],
+            "feat_dir": [osp.join(SAVE_DIR, 'reid/test_feat_resnet101_ibn_a'), osp.join(RESULT_DIR, 'classifier/test_feat_tracking')],
             "save_video": False,
-            "save_feat": True,
-            "mode": 'test',
-            "list_keys": TEST_TRACK_ORDERS,
-            "mask_dir": '/content/AI_City_2021/results/object_tracking_exp/test_deepsort_v4-1/attn_mask/npy_1',
+            "save_feat": False,
         }
     }
-    ds_cfg = {
-        'METRIC': {'NAME': 'cosine', 'THRESHOLD': 0.3, 'BUDGET': 70},
-        'TRACKER': {'MAX_IOU_DISTANCE': 0.7, 'MAX_AGE': 10, 'N_INIT': 1},
-    }
 
-    for mode in config:            
-        exp_name = f'{mode}_deepsort_v4-3'
-        save_dir = osp.join(SAVE_DIR, exp_name)
-        save_json_dir = osp.join(save_dir, 'pkl_attn')
-        save_vis_dir = osp.join(save_dir, 'video_attn')
+    for mode in config:  
+        mask_save_dir = prepare_dir(tracking_config['MASK_SAVE_DIR'])
+        vis_save_dir = prepare_dir(tracking_config['VIS_SAVE_DIR'] )
+        tracking_save_dir = prepare_dir(tracking_config['TRACK_SAVE_DIR'] )
 
-        print(f'Save tracking exp results to {save_dir}')
-        os.makedirs(save_dir, exist_ok=True)
-        os.makedirs(save_json_dir, exist_ok=True)
-        os.makedirs(save_vis_dir, exist_ok=True)
+        # 1. Get Attention map
+        print(f'>> Extract attention map for tracking, save results to {mask_save_dir}')
+        test_data = json_load(TEST_TRACK_JSON)
+        list_ids = list(test_data.keys())
+        for raw_id in tqdm(list_ids):
+            new_id = test_track_map[raw_id]
+            save_path = osp.join(mask_save_dir, f'{new_id}.npy')
 
-        json_save(config[mode], osp.join(save_dir, 'config.json'))
+            vid_data = test_data[raw_id]
+            vid_attn_mask, is_interpolate = get_attn_mask(
+                vid_data, tracking_config['ATN_MASK']['EXPAND_RATIO'], tracking_config['ATN_MASK']['N_EXPAND']
+            )
+            np.save(save_path, vid_attn_mask)
 
-        # track_mask = np.load(osp.join(config[mode]['mask_dir'], f'{}.npy'))
-        tracking(config[mode], ds_cfg, save_json_dir, save_vis_dir, verbose=False)
+        
+        # 2. Run Tracking using attention masks
+        print(f'>> Run DeepSort on {mode} mode, save result to {tracking_save_dir}')
+        tracking(config[mode], tracking_config, tracking_save_dir, mask_save_dir, vis_save_dir, verbose=False)

@@ -17,21 +17,23 @@ from utils import (
     AverageMeter, xyxy_to_xywh, xywh_to_xyxy, json_save, json_load, pickle_save, pickle_load
 )
 from object_tracking.test.test_utils import (
-    a_substract_b, is_miss_frame, get_miss_frame_tracks, calculate_iou, calculate_distance,
-    SAVE_DIR
+    calculate_iou, calculate_distance, SAVE_DIR
 )
+from object_tracking.utils import subject_config
 from object_tracking.test.evaluate_subject import evaluate, eda_score_dict #, TRAIN_SVO_IDS
-from object_tracking.tools import visualize, visualize_subject
 from object_tracking.library import VideoResult
 
-
-# ID_TO_CHECK = [str(i) for i in [5, 6, 9, 84]]
-IOU_ACCEPT_THRES = 0.2 #not use yet
+# GLOBAL VARIABLES
+IOU_ACCEPT_THRES = subject_config['IOU_ACCEPT_THRES'] #not use yet
+SCORE_THRES = subject_config['SCORE_THRES']
+IOU_AVG_THRES = subject_config['IOU_AVG_THRES']
 
 test_track_order = {}
 for k, v in test_track_map.items():
     test_track_order[str(v)] = k
 
+
+## FUNCTIONS
 def get_top_longest_tracks(vid_data: dict, top_k: int=5):
     list_lens = []
     track_map = vid_data['track_map']
@@ -45,10 +47,10 @@ def get_top_longest_tracks(vid_data: dict, top_k: int=5):
     
     return [i[0] for i in list_lens[:top_k]]
 
-def get_top_nearest_tracks(key: str, vid_data: VideoResult, label_boxes: list, top_k: int=5):  
+def get_top_nearest_tracks(vid_data: VideoResult, label_boxes: list, top_k: int=5):  
     list_lens = []
     track_map = vid_data.track_map
-    COMPARE_RANGE = 30
+    COMPARE_RANGE = subject_config['COMPARE_RANGE']
 
     for track_id in track_map:
         track_frame_order = track_map[track_id].frame_order
@@ -80,6 +82,25 @@ def get_top_nearest_tracks(key: str, vid_data: VideoResult, label_boxes: list, t
 # label_dict = json_load(TRAIN_TRACK_ORDER_JSON) # Use to load groundtruth boxes
 # label_dict = json_load(TEST_TRACK_ORDER_JSON) # Use to load groundtruth boxes
 test_track = json_load(TEST_TRACK_JSON)
+def find_subject_track(vid_data, subject_boxes: list):
+    top_longest_track_ids = get_top_nearest_tracks(vid_data, subject_boxes, top_k=5)
+    score_dict = evaluate(subject_boxes, [vid_data.track_map[i] for i in top_longest_track_ids])
+
+    best_tracks = []
+    for track_res in score_dict:
+        if ((track_res['score'] > SCORE_THRES) and (track_res['iou_avg'] > IOU_AVG_THRES)) or \
+                (track_res['score'] == 1.0):
+            best_tracks.append((track_res['track_id'], track_res['iou_avg']))
+        pass
+    
+    if len(best_tracks) == 0:
+        return None, score_dict
+    best_tracks = sorted(best_tracks, key = lambda val: val[1], reverse=True) # Sort with iou_avg
+    subject_track_id = best_tracks[0][0]
+    
+    return subject_track_id, score_dict
+
+
 def check_track_subject(save_dir: str, vid_save_dir: str, file_dir: str,
                         visualize=False, json=True, file_mode: str='json'):
 
@@ -103,16 +124,39 @@ def check_track_subject(save_dir: str, vid_save_dir: str, file_dir: str,
         subject_boxes = test_track[test_track_order[i]]['boxes']
         subject_boxes = [xywh_to_xyxy(box) for box in subject_boxes]
 
-        # top_longest_track_ids = get_top_longest_tracks(vid_data, top_k=5)
-        top_longest_track_ids = get_top_nearest_tracks(i, vid_data, subject_boxes, top_k=5)
-        score_dict = evaluate(subject_boxes, [vid_data.track_map[i] for i in top_longest_track_ids])
+        # vid_data = find_subject_track(vid_data, subject_boxes)
+        subject_track_id, score_dict = find_subject_track(vid_data, subject_boxes)
+
+        # top_longest_track_ids = get_top_nearest_tracks(vid_data, subject_boxes, top_k=5)
+        # score_dict = evaluate(subject_boxes, [vid_data.track_map[i] for i in top_longest_track_ids])
         total_score_dict[i] = score_dict
 
-    if json:
-        fail_path = osp.join(save_dir, 'all_score_dict.json')
-        json_save(total_score_dict, fail_path)
     
     return total_score_dict
+
+def main2():
+    exp_id = 'test_deepsort_v4-3'
+    track_dir = osp.join(SAVE_DIR, exp_id, 'json_full')
+    miss_frame_ids = ['417', '168']
+    cur_fail = ['417', '244', '320']
+    
+    test_ids = ["417","331","195","407","25","166","244","256","320"]
+    result = {}
+    for vid_id in tqdm(test_ids):
+        vid_json_path = osp.join(track_dir, f'{vid_id}.json')
+        vid_data = VideoResult(vid_json_path)
+        
+        subject_boxes = test_track[test_track_map[vid_id]]['boxes']
+        subject_boxes = [xywh_to_xyxy(box) for box in subject_boxes]
+
+        # vid_data = find_subject_track(vid_data, subject_boxes)
+        subject_track_id, score_dict = find_subject_track(vid_data, subject_boxes)
+        print(score_dict)
+        result[vid_id] = subject_track_id
+        pass
+    
+    print(result)
+    pass
 
 def main():
     exp_id = 'test_deepsort_v4-3'
@@ -186,7 +230,8 @@ def main_1():
 
         pass
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
+    # main2()
     # main_1()
-    main()
+    # main()
     

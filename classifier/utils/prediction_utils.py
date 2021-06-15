@@ -24,8 +24,8 @@ def filter_track_veh_preds(preds, veh_thres=0.8, weight=None):
     
     return list_preds.tolist(), final_preds.tolist(), flag
 
-def filter_track_col_preds(preds, veh_thres=0.8, weight=None):
-    list_preds = (preds >= veh_thres).astype(np.int)
+def filter_track_col_preds(preds, col_thres=0.4, weight=None):
+    list_preds = (preds >= col_thres).astype(np.int)
     n_box = preds.shape[0]
     if weight is None:
         weight = np.ones(n_box, dtype=np.float)/n_box
@@ -34,7 +34,7 @@ def filter_track_col_preds(preds, veh_thres=0.8, weight=None):
             weight /= np.sum(weight)
     
     final_preds = np.mean(preds*weight, axis=0)
-    final_preds = (final_preds >= veh_thres).astype(np.int)
+    final_preds = (final_preds >= col_thres).astype(np.int)
 
     return list_preds.tolist(), final_preds.tolist()
 

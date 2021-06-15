@@ -16,7 +16,7 @@ class deepsort_rbc():
         
 	def reset_tracker(self):
 		# self.tracker= Tracker(self.metric, max_age=12, n_init=1)			
-		self.tracker= Tracker(self.metric, max_age=4, n_init=1)			
+		self.tracker= Tracker(self.metric, max_age=10, n_init=1)			
 
 	def run_deep_sort(self, out_scores, out_boxes, features):
 		if out_boxes==[]:			

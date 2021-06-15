@@ -1,7 +1,7 @@
-from . import preprocessing as prep
-from . import nn_matching
-from object_tracking.deep_sort.tracker import Tracker 
-from object_tracking.deep_sort.detection import Detection
+from object_tracking.deep_sort_feat import preprocessing as prep
+from object_tracking.deep_sort_feat import nn_matching
+from object_tracking.deep_sort_feat.tracker import Tracker 
+from object_tracking.deep_sort_feat.detection import Detection
 
 import numpy as np
 

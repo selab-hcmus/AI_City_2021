@@ -2,13 +2,15 @@ import os
 import os.path as osp
 from tqdm import tqdm
 
-from utils import json_load, json_save, AverageMeter
+from utils import AverageMeter
 from object_tracking.library import VideoResult, TrackResult
-from object_tracking.test.test_utils import SAVE_DIR, calculate_iou, calculate_distance
+from object_tracking.test.test_utils import SAVE_DIR, calculate_iou
 from object_tracking.utils import stop_config
 
 STOP_IOU_THRES = stop_config['STOP_IOU_THRES']
-def is_track_stop(track_data: TrackResult, k=3):
+COMPARE_RANGE = stop_config['COMPARE_RANGE']
+
+def is_track_stop(track_data: TrackResult, k=COMPARE_RANGE):
     meter = AverageMeter()
     n = min(k, len(track_data.boxes)//2)
     first_boxes = track_data.boxes[:n]
@@ -62,5 +64,5 @@ def main():
     pass 
 
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()

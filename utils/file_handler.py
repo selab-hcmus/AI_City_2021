@@ -1,4 +1,9 @@
+import os
 import json, pickle 
+
+def prepare_dir(data_dir: str):
+    os.makedirs(data_dir, exist_ok=True)
+    return data_dir
 
 def dict_save(data, save_path: str):
     if '.json' in save_path:

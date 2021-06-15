@@ -3,7 +3,7 @@ nltk.download('wordnet')
 
 import json
 import re
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 import pandas as pd
 import random
 import webcolors
@@ -12,6 +12,7 @@ from allennlp.predictors.predictor import Predictor
 import Levenshtein
 import spacy
 from nltk.stem import WordNetLemmatizer
+
 
 from srl_extractor import SRL
 

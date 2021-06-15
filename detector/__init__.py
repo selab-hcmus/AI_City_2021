@@ -1,2 +1,2 @@
-from .stop_detector import StopDetector
+from detector.library import StopDetector
 

@@ -1,6 +1,6 @@
 import numpy as np
 
-from .utils import (
+from detector.utils import (
     xyxy_to_xywh, cal_distance
 )
 
@@ -15,11 +15,16 @@ class StopDetector(object):
         """
         super().__init__()
         self.skip_frame = k
-        self.delta = delta 
+        self.delta = delta
         self.alpha = alpha
 
-    def process(self, track_data: dict):
-        list_boxes = track_data['boxes']
+    def process(self, list_boxes: list):
+        """Determine target vehicle stops or not
+        Args:
+            list_boxes (list): of xyxy box
+        Returns:
+            result (bool)
+        """
         list_boxes = [xyxy_to_xywh(box) for box in list_boxes]
         N = len(list_boxes)
         distances = [
@@ -27,8 +32,8 @@ class StopDetector(object):
         ]
         distances = self.smooth(distances)
         mean_distance = np.mean(distances)
-        print(f'mean distance: {mean_distance}')
-        print(distances)
+        # print(f'mean distance: {mean_distance}')
+        # print(distances)
         for i in range(N-self.skip_frame):
             if (distances[i] < mean_distance*self.alpha):
                 return True
