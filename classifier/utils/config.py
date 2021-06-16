@@ -3,7 +3,7 @@ import os.path as osp
 
 from utils import DATA_DIR, RESULT_DIR
 
-RESULT_DIR = '/content/AI_City_2021/results'
+# RESULT_DIR = '/content/AI_City_2021/results'
 CLASSIFIER_SAVE_DIR = osp.join(RESULT_DIR, 'classifier')
 CLASSIFIER_DATA_DIR = osp.join(DATA_DIR, 'classifier')
 
@@ -100,7 +100,7 @@ cfg_col.update({
     # fix later
     'WEIGHT': osp.join(CLASSIFIER_SAVE_DIR, 'col_classifier.pt'),
     "type": "color",
-    'output_type': 'one_hot',
+    'output_type': 'fraction',
     'class_map': {
         0: 'gray',
         1: 'gold',

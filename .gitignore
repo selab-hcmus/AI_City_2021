@@ -14,13 +14,18 @@ dataset/*
 results/*
 
 # SRL + retrieval model
-srl_extraction/data/*
-srl_extraction/notebooks
-srl_extraction/results
-srl_handler/results/*
+srl_handler
+# srl_extraction/data/*
+# srl_extraction/notebooks
+# srl_extraction/results
+# srl_handler/results/*
+
 retrieval_model/experiments/*
 retrieval_model/notebooks
 retrieval_model_v2
+
+# detector
+detector/*_detector
 
 # Visualize tool
 visualize_tool/video_mp4

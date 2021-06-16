@@ -10,11 +10,11 @@ RESULT_DIR = '/home/ntphat/projects/AI_City_2021/results'
 
 TRAIN_TRACK_JSON = osp.join(DATA_DIR, 'data/train-tracks.json')
 TEST_TRACK_JSON = osp.join(DATA_DIR, 'data/test-tracks.json')
-TEST_QUERY_JSON = osp.join(DATA_DIR, 'data/test-tracks.json')
+TEST_QUERY_JSON = osp.join(DATA_DIR, 'data/test-queries.json')
 
 TRAIN_TRACK_ORDER_JSON = osp.join(DATA_DIR, 'data/train-tracks_order.json')
 TEST_TRACK_ORDER_JSON = osp.join(DATA_DIR, 'data/test-tracks_order.json')
-TEST_QUERY_ORDER_JSON = osp.join(DATA_DIR, 'data/test-tracks_order.json')
+TEST_QUERY_ORDER_JSON = osp.join(DATA_DIR, 'data/test-queries_order.json')
 
 MAP_ID_DIR = osp.join(DATA_DIR, 'map_id')
 TEST_TRACK_MAP_JSON = osp.join(MAP_ID_DIR, 'test_tracks.json')

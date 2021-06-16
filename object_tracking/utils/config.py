@@ -26,3 +26,6 @@ stop_config = {
     'STOP_IOU_THRES': 0.4, 'COMPARE_RANGE': 3
 }
 
+class_config = {
+    'VEH_THRES': 0.6, 'COL_THRES': 0.3
+}

@@ -11,8 +11,8 @@ setup(
     packages=find_packages(
                 include=[
                     'detector', 'classifier', 'object_tracking', 
-                    'retrieval_model','refinement', 'utils', 'relation_graph',
-                    'srl_extraction', 'srl_handler',
+                    'retrieval_model','refinement', 'utils', 'relation_graph', 'srl',
+                    # 'srl_extraction', 'srl_handler', 
                 ],
                 exclude=[
                     "results", "dataset", "assets", "visualize_tool", 

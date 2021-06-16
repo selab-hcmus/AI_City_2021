@@ -12,8 +12,8 @@ from object_tracking.utils import (
     tracking_config
 )
 from object_tracking.utils.attn_mask import get_attn_mask
-from object_tracking.tools import convert_video_track
-from object_tracking.library import TrackingManager
+from object_tracking.tools.convert_track import convert_video_track
+from object_tracking.library.manager import TrackingManager
 
 TEST_TRACK_ORDERS = list(test_track_map.values())
 ATTENTION_THRES = tracking_config['ATTENTION_THRES']

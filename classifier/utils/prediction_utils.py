@@ -29,14 +29,17 @@ def filter_track_col_preds(preds, col_thres=0.4, weight=None):
     n_box = preds.shape[0]
     if weight is None:
         weight = np.ones(n_box, dtype=np.float)/n_box
-    else:
-        if np.sum(weight) != 1:
-            weight /= np.sum(weight)
     
-    final_preds = np.mean(preds*weight, axis=0)
-    final_preds = (final_preds >= col_thres).astype(np.int)
-
-    return list_preds.tolist(), final_preds.tolist()
+    # print(f'weight')
+    # print(weight)
+    # print(f'preds')
+    # print(list_preds)
+    final_pred = np.sum(preds*weight[:, None], axis=0)/np.sum(weight)
+    # print(f'final pred')
+    # print(final_preds)
+    
+    thres_final_pred = (final_pred >= col_thres).astype(np.int)
+    return list_preds.tolist(), final_pred.tolist(), thres_final_pred.tolist()
 
 def get_class_name(pred: list, class_map: dict):
     names = []

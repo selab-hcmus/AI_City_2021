@@ -3,6 +3,7 @@ import os.path as osp
 from tqdm import tqdm
 
 from utils import AverageMeter
+
 from object_tracking.library import VideoResult, TrackResult
 from object_tracking.test.test_utils import SAVE_DIR, calculate_iou
 from object_tracking.utils import stop_config

@@ -39,8 +39,9 @@ class ClassifierManager(object):
             images (list): list of np.array boxes
         """
         preds = self.col_model.predict(images)
-        preds, final_pred = filter_track_col_preds(images, thres, weight)
+        preds, final_pred, thres_final_pred = filter_track_col_preds(preds, thres, weight)
+        
         names = [get_class_name(pred, COL_CLASS_MAP) for pred in preds]
-        final_name = get_class_name(final_pred, COL_CLASS_MAP)
-        return names, final_name, preds, final_pred
+        final_name = get_class_name(thres_final_pred, COL_CLASS_MAP)
+        return names, final_name, preds, final_pred, thres_final_pred
     
