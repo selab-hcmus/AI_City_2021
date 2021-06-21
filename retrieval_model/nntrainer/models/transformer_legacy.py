@@ -156,13 +156,6 @@ class TransformerLegacy(nn.Module):
 
         self.tf = transformer_class(self.cfg.selfatn)
 
-        # # subspace disabled for now
-        # self.tf = SubspaceTransformerEncoder(
-        #     cfg.num_layers, input_dim, cfg.num_heads,
-        #     cfg.pointwise_ff_dim,
-        #     cfg.dropout, cfg.activation, cfg.atn_ss_subspace,
-        #     cfg.atn_ss_kernels, use_cuda=use_cuda)
-
         # build transformer for context
         self.use_context = cfg.use_context
         self.tf_context = None

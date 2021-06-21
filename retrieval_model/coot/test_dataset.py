@@ -36,19 +36,14 @@ class VideoDataset(th_data.Dataset):
         self.is_train = False
         
         test_dict = json.load(open(TEST_TRACK_JSON))
-        self.keys = list(test_dict.keys())
+        self.data_keys = list(test_dict.keys())
 
         # setup paths
-        self.path_dataset = self.path_data / self.cfg.name
-
-        # reduce dataset size if request
-        if cfg.max_datapoints > -1:
-            self.keys = self.keys[:cfg.max_datapoints]
-            print(f"Reduced number of datapoints to {len(self.keys)}")
+        self.path_dataset = self.path_data 
 
         # For each key (datapoint) get the data_key (reference to the video file).
         # A single video can appear in multiple datapoints.
-        self.data_keys = self.keys # [raw_meta[key]["data_key"] for key in self.keys]
+        # self.data_keys = self.keys # [raw_meta[key]["data_key"] for key in self.keys]
 
         # load video features
         self.vid_feats = VideoFeatureLoader(
@@ -59,69 +54,23 @@ class VideoDataset(th_data.Dataset):
         self.text_preproc_func = data_text.get_text_preprocessor(self.cfg.text_preprocessing)
 
     def get_vid_frames_by_indices(self, key: str, indices: List[int]) -> np.ndarray:
-        """
-        Load frames' features of a video given by indices.
-
-        Args:
-            key: Video key.
-            indices: List of frame indices.
-
-        Returns:
-            Frame features with shape (len(indices), feature_dim)
-        """
         data_key = self.meta[key]["data_key"]
         return self.vid_feats[data_key][indices]
 
     def get_vid_feat_by_amount(self, key: str, num_frames: int) -> np.ndarray:
-        """
-        Load a given number of frames from a video.
-
-        Args:
-            key: Video key.
-            num_frames: Number of frames desired
-
-        Returns:
-            Frame features with shape (num_frames, feature_dim)
-        """
         indices = maths.compute_indices(self.vid_feats.num_frames[key], num_frames, self.is_train)
         return self.vid_feats[key][indices]
 
     def get_clip_frames_by_amount(self, key: str, seg_num: int, num_frames: int) -> np.ndarray:
-        """
-        Load a given number of frames from a clip.
-
-        Args:
-            key: Video key.
-            seg_num: Segment number.
-            num_frames: Number of frames desired.
-
-        Returns:
-            Frame features with shape (num_frames, feature_dim)
-        """
         seg = self.meta[key]["segments"][seg_num]
         indices = maths.compute_indices(seg["num_frames"], num_frames, self.is_train)
         indices += seg["start_frame"]
         return self.get_vid_frames_by_indices(key, indices)
 
     def __len__(self) -> int:
-        """
-        Return dataset length.
-
-        Returns:
-            Dataset length.
-        """
         return len(self.keys)
 
     def __getitem__(self, item: int) -> VideoDataPointTuple:
-        """
-        Return a single datapoint.
-
-        Args:
-            item: Item number.
-
-        Returns:
-            Tuple of all required data.
-        """
         key = self.keys[item]
         data_key = key
         vid_feat = self.vid_feats[data_key]
@@ -144,8 +93,6 @@ class VideoDataset(th_data.Dataset):
         return VideoDataPointTuple(
             key, data_key,
             vid_feat, vid_feat_len, 
-            # clip_num, clip_feat_list, clip_feat_len_list, 
-            # sent_num, sent_feat_list, sent_feat_len_list
         )
 
     def collate_fn(self, data_batch: List[VideoDataPointTuple]):
@@ -200,18 +147,13 @@ class TextDataset(th_data.Dataset):
         self.is_train = False
 
         self.test_dict = json.load(open(TEST_QUERY_JSON))
-        self.keys = list(self.test_dict.keys())
+        self.data_keys = list(self.test_dict.keys())
         
         # setup paths
-        self.path_dataset = self.path_data / self.cfg.name
-        # reduce dataset size if request
-        if cfg.max_datapoints > -1:
-            self.keys = self.keys[:cfg.max_datapoints]
-            print(f"Reduced number of datapoints to {len(self.keys)}")
-
+        self.path_dataset = self.path_data #/ self.cfg.name
         # For each key (datapoint) get the data_key (reference to the video file).
         # A single video can appear in multiple datapoints.
-        self.data_keys = self.keys # [raw_meta[key]["data_key"] for key in self.keys]
+        # self.data_keys = self.keys # [raw_meta[key]["data_key"] for key in self.keys]
 
         # load text features
         self.text_feats = TextFeaturesLoader(
@@ -224,14 +166,6 @@ class TextDataset(th_data.Dataset):
         return len(self.keys)
 
     def __getitem__(self, item: int) -> RetrievalDataPointTuple:
-        """
-        Return a single datapoint.
-        Args:
-            item: Item number.
-
-        Returns:
-            Tuple of all required data.
-        """
         key = self.keys[item]
         data_key = key
 
@@ -250,11 +184,6 @@ class TextDataset(th_data.Dataset):
         )
 
     def collate_fn(self, data_batch: List[TextDataPointTuple]):
-        """
-        Collate the single datapoints above. Custom collation needed since sequences have different length.
-
-        Returns:
-        """
         batch_size = len(data_batch)
         key: List[str] = [d.key for d in data_batch]
         data_key: List[str] = [d.data_key for d in data_batch]

@@ -7,9 +7,9 @@ from PIL import Image
 import torch 
 from torch import nn 
 import torchvision
-from box_extractor import init_model
-from utils import preprocess_input, get_feat_from_subject_box
-from config import cfg_veh, cfg_col
+from classifier.library.box_extractor import init_model
+from classifier.utils import preprocess_input, get_feat_from_subject_box
+from classifier.utils.config import cfg_veh, cfg_col
 
 ## GLOBAL VARIABLES
 # ROOT_DIR = '/content/AI_CITY_2021/DATA/data_track_5/AIC21_Track5_NL_Retrieval'

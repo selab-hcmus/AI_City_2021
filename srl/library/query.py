@@ -10,27 +10,29 @@ class Query(object):
         self._setup(query_content) 
 
     def _setup(self, query_content):
-        # Init captions
+        # 1. Init captions
         self.list_caps = []
         for cap_id in query_content.keys():
             self.list_caps.append(Caption(query_content[cap_id], cap_id))
 
-        # Find subject
+        # 2. Find subject
         self.subject_vehicle = [cap.main_subject for cap in self.list_caps]
         self.objects = [svo['O'] for svo in self.get_all_SVO_info()]
         self.relation_actions = [svo['V'] for svo in self.get_all_SVO_info()]
         
         self._get_list_colors()
-        self._get_list_objects()
-
         self._refine_subjects()
         # self._refine_colors()
 
+        # 3. Find objects
+        self._get_list_objects()
+
+        # 4. Find actions
         self._get_list_action()
         self._refine_list_action()
 
     
-
+    # ---------------------------------------------------
     # Subject info
     def _refine_list_action(self, unique=True):
         if unique:
@@ -66,7 +68,8 @@ class Query(object):
         self.relation_actions = []
 
         pass
-
+    
+    # ---------------------------------------------------
     # Object info
     def _get_list_objects(self, unique=True):
         self.object_vehicle = [obj.vehicle for obj in self.objects]
@@ -76,7 +79,10 @@ class Query(object):
         
         self.object_vehicle = refine_list_subjects(self.object_vehicle, unique, is_subject=False)
         pass
+    
 
+
+    # ---------------------------------------------------
     # UTILITIES
     def get_all_SV_info(self):
         sv_samples = [] 

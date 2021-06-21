@@ -110,6 +110,9 @@ class BaseTrainConfig(typext.ConfigClass):
         assert isinstance(self.loss_func, str)
         self.clip_gradient: float = config.pop("clip_gradient")
         assert isinstance(self.clip_gradient, (int, float)) and self.clip_gradient >= -1
+        
+        self.weight_action: float = config.pop("weight_action")
+        self.weight_ret: float = config.pop("weight_ret")
 
 
 class BaseValConfig(typext.ConfigClass):

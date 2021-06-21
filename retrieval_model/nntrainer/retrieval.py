@@ -10,7 +10,7 @@ import torch as th
 
 
 VALKEYS = ["r1", "r5", "r10", "r50", "medr", "meanr", "sum"]
-VALHEADER = "Retriev | R@1   | R@5   | R@10  | R@50  | MeanR |  MedR |    Sum"
+VALHEADER = "Retriev | R@1   | R@5   | R@10  | R@50  | MedR  | MeanR |    Sum"
 
 
 def retrieval_results_to_str(results: Dict[str, float], name: str) -> str:

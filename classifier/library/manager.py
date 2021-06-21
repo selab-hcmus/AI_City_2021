@@ -1,9 +1,12 @@
+import torch
+from torch.autograd.grad_mode import no_grad
+
 from classifier.utils.config import (
     cfg_veh, cfg_col,
     VEH_CLASS_MAP, COL_CLASS_MAP
 )
 from classifier.utils import (
-    filter_track_veh_preds, filter_track_col_preds, get_class_name
+    filter_track_veh_preds, filter_track_col_preds, get_class_name, preprocess_input
 )
 from .box_extractor import init_model
 
@@ -29,6 +32,7 @@ class ClassifierManager(object):
         """
         preds = self.veh_model.predict(images)
         preds, final_pred, flag_thres = filter_track_veh_preds(preds, thres, weight)
+        
         names = [get_class_name(pred, VEH_CLASS_MAP) for pred in preds]
         final_name = get_class_name(final_pred, VEH_CLASS_MAP)
         return names, final_name, preds, final_pred, flag_thres
@@ -39,9 +43,9 @@ class ClassifierManager(object):
             images (list): list of np.array boxes
         """
         preds = self.col_model.predict(images)
-        preds, final_pred, thres_final_pred = filter_track_col_preds(preds, thres, weight)
+        thres_preds, final_pred, thres_final_pred = filter_track_col_preds(preds, thres, weight)
         
-        names = [get_class_name(pred, COL_CLASS_MAP) for pred in preds]
+        names = [get_class_name(pred, COL_CLASS_MAP) for pred in thres_preds]
         final_name = get_class_name(thres_final_pred, COL_CLASS_MAP)
         return names, final_name, preds, final_pred, thres_final_pred
     

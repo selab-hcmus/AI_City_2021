@@ -22,7 +22,7 @@ srl_handler
 
 retrieval_model/experiments/*
 retrieval_model/notebooks
-retrieval_model_v2
+retrieval_model_old
 
 # detector
 detector/*_detector

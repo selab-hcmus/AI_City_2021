@@ -9,14 +9,15 @@ import torch as th
 from torch.utils import data as th_data
 
 # import retrieval_model.coot.configs_retrieval
-from retrieval_model.coot.configs_retrieval import RetrievalDatasetConfig
-from retrieval_model.coot.features_loader import TextFeaturesLoader, VideoFeatureLoader
-from retrieval_model.nntrainer import data as nn_data, data_text, maths, typext, utils, utils_torch
-
-from retrieval_model.coot.dataset_utils import (
+import coot
+from coot.configs_retrieval import RetrievalDatasetConfig
+from coot.features_loader import TextFeaturesLoader, VideoFeatureLoader, TextActionLoader
+from coot.dataset_utils import (
     RetrievalDataPointTuple, RetrievalDataBatchTuple,
-    SPLIT_QUERY_IDS, TRAIN_TRACK_JSON
+    SPLIT_QUERY_IDS, TRAIN_TRACK_JSON, ACTION_CLASS
 )
+from nntrainer import data as nn_data, data_text, maths, typext, utils, utils_torch
+
 
 class RetrievalDataset(th_data.Dataset):
     """
@@ -28,31 +29,26 @@ class RetrievalDataset(th_data.Dataset):
         verbose: Print output (cannot use logger in multiprocessed torch Dataset class)
     """
 
-    def __init__(self, cfg: RetrievalDatasetConfig, path_data: Union[str, Path], *, verbose: bool = False):
+    def __init__(self, cfg: RetrievalDatasetConfig, path_action: str, path_data: Union[str, Path], *, verbose: bool = False):
         # store config
         self.path_data = Path(path_data)
         self.cfg = cfg
         self.split = cfg.split # {'val', 'train', 'uptrain'}
 
         if self.split == 'uptrain':
-            self.keys = SPLIT_QUERY_IDS['train'] + SPLIT_QUERY_IDS['val']
+            self.data_keys = SPLIT_QUERY_IDS['train'] + SPLIT_QUERY_IDS['val']
         else:
-            self.keys = SPLIT_QUERY_IDS[self.split] # List query_ids used for this dataset
+            self.data_keys = SPLIT_QUERY_IDS[self.split] # List query_ids used for this dataset
 
         self.verbose = verbose
         self.is_train = (self.split in ['train', 'uptrain'])
 
         # setup paths
-        self.path_dataset = self.path_data / self.cfg.name
-
-        # reduce dataset size if request
-        if cfg.max_datapoints > -1:
-            self.keys = self.keys[:cfg.max_datapoints]
-            print(f"Reduced number of datapoints to {len(self.keys)}")
+        self.path_dataset = self.path_data #/ self.cfg.name
 
         # For each key (datapoint) get the data_key (reference to the video file).
         # A single video can appear in multiple datapoints.
-        self.data_keys = self.keys # [raw_meta[key]["data_key"] for key in self.keys]
+        # self.data_keys = self.keys # [raw_meta[key]["data_key"] for key in self.keys]
 
         # load video features
         self.vid_feats = VideoFeatureLoader(
@@ -61,54 +57,25 @@ class RetrievalDataset(th_data.Dataset):
 
         # load text features
         self.text_feats = TextFeaturesLoader(
-            self.path_dataset, f"{self.cfg.text_feat_name}", self.cfg.text_feat_source, self.keys,
+            self.path_dataset, self.cfg.text_feat_name, self.cfg.text_feat_source, self.data_keys,
             preload_text_feat=self.cfg.preload_text_feat)
 
+        # Load text action
+        self.text_action = TextActionLoader(path_action)
         self.track_dict = json.load(open(TRAIN_TRACK_JSON, 'r'))
 
         # load preprocessing function for text
         self.text_preproc_func = data_text.get_text_preprocessor(self.cfg.text_preprocessing)
 
     def get_vid_frames_by_indices(self, key: str, indices: List[int]) -> np.ndarray:
-        """
-        Load frames' features of a video given by indices.
-
-        Args:
-            key: Video key.
-            indices: List of frame indices.
-
-        Returns:
-            Frame features with shape (len(indices), feature_dim)
-        """
         data_key = self.meta[key]["data_key"]
         return self.vid_feats[data_key][indices]
 
     def get_vid_feat_by_amount(self, key: str, num_frames: int) -> np.ndarray:
-        """
-        Load a given number of frames from a video.
-
-        Args:
-            key: Video key.
-            num_frames: Number of frames desired
-
-        Returns:
-            Frame features with shape (num_frames, feature_dim)
-        """
         indices = maths.compute_indices(self.vid_feats.num_frames[key], num_frames, self.is_train)
         return self.vid_feats[key][indices]
 
     def get_clip_frames_by_amount(self, key: str, seg_num: int, num_frames: int) -> np.ndarray:
-        """
-        Load a given number of frames from a clip.
-
-        Args:
-            key: Video key.
-            seg_num: Segment number.
-            num_frames: Number of frames desired.
-
-        Returns:
-            Frame features with shape (num_frames, feature_dim)
-        """
         seg = self.meta[key]["segments"][seg_num]
         indices = maths.compute_indices(seg["num_frames"], num_frames, self.is_train)
         indices += seg["start_frame"]
@@ -138,6 +105,8 @@ class RetrievalDataset(th_data.Dataset):
 
         # ---------- load text as string ----------
         sentences = self.text_preproc_func(self.track_dict[key]['nl'])
+        text_act = th.Tensor(self.text_action[key]).float()
+        
 
         # ---------- load text features ----------
         par_feat = self.text_feats[data_key][0]
@@ -149,8 +118,7 @@ class RetrievalDataset(th_data.Dataset):
             key, data_key, sentences, 
             vid_feat, vid_feat_len, 
             par_feat, par_feat_len, 
-            # clip_num, clip_feat_list, clip_feat_len_list, 
-            # sent_num, sent_feat_list, sent_feat_len_list
+            text_act,
         )
 
     def collate_fn(self, data_batch: List[RetrievalDataPointTuple]):
@@ -202,35 +170,28 @@ class RetrievalDataset(th_data.Dataset):
             par_feat[batch, :seq_len, :] = item
             par_feat_mask[batch, :seq_len] = 0
 
-        
+        list_acts = [d.text_act for d in data_batch]
+        text_act = th.zeros(batch_size, ACTION_CLASS)
+        for batch, label in enumerate(list_acts):
+            text_act[batch, :] = label
+            pass
+
         ret = RetrievalDataBatchTuple(
             key, data_key, sentences, 
             vid_feat, vid_feat_mask, vid_feat_len, 
-            par_feat, par_feat_mask, par_feat_len
+            par_feat, par_feat_mask, par_feat_len,
+            text_act
         )
         return ret
 
 
-def create_retrieval_datasets_and_loaders(cfg: coot.configs_retrieval.RetrievalConfig, path_data: Union[str, Path]) -> (
+def create_retrieval_datasets_and_loaders(cfg: coot.configs_retrieval.RetrievalConfig, path_action: str, path_data: Union[str, Path]) -> (
         Tuple[RetrievalDataset, RetrievalDataset, th_data.DataLoader, th_data.DataLoader]):
-    """
-    Create training and validation datasets and dataloaders for retrieval.
 
-    Args:
-        cfg: Experiment configuration class.
-        path_data: Dataset base path.
-
-    Returns:
-        Tuple of:
-            Train dataset.
-            Val dataset.
-            Train dataloader.
-            Val dataloader.
-    """
-    train_set = RetrievalDataset(cfg.dataset_train, path_data)
+    train_set = RetrievalDataset(cfg.dataset_train, path_action, path_data)
     train_loader = nn_data.create_loader(
         train_set, cfg.dataset_train, cfg.train.batch_size, collate_fn=train_set.collate_fn)
-    val_set = RetrievalDataset(cfg.dataset_val, path_data)
+    val_set = RetrievalDataset(cfg.dataset_val, path_action, path_data)
     val_loader = nn_data.create_loader(
         val_set, cfg.dataset_val, cfg.val.batch_size, collate_fn=val_set.collate_fn)
     return train_set, val_set, train_loader, val_loader

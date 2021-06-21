@@ -90,9 +90,9 @@ def parse_result(srl_json: str, mode: str):
         query_dict['subject_vehicle_label'] = subject_vehicle_label
         query_dict['subject_color_label'] = subject_color_label
         query_dict['action_label'] = get_label_vector(query.actions, act_info['num_classes'], act_info['label_map'], is_test)
-
-        query_dict['object_vehicle'] = query.subject_vehicle
-        query_dict['object_color'] = query.subject_color
+            
+        query_dict['object_vehicle'] = query.object_vehicle
+        query_dict['object_color'] = query.object_color
         query_dict['object_vehicle_label'] = get_label_vector(query.object_vehicle, veh_info['num_classes'], veh_info['label_map'], is_test)
         query_dict['object_color_label'] = get_label_vector(query.object_color, col_info['num_classes'], col_info['label_map'], is_test)
         

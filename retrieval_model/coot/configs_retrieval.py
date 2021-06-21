@@ -109,19 +109,15 @@ class RetrievalDatasetConfig(trainer_configs.BaseDatasetConfig):
 
     def __init__(self, config: Dict[str, Any]) -> None:
         super().__init__(config)
-        self.metadata_name: str = config.pop("metadata_name")
         self.vid_feat_name: str = config.pop("vid_feat_name")
         self.vid_feat_source: str = config.pop("vid_feat_source")
         self.vid_feat_dim: int = config.pop("vid_feat_dim")
         self.text_feat_name: str = config.pop("text_feat_name")
         self.text_feat_source: str = config.pop("text_feat_source")
         self.text_feat_dim: int = config.pop("text_feat_dim")
-        self.min_frames: int = config.pop("min_frames")  # unused
+    
         self.max_frames: int = config.pop("max_frames")
-        self.use_clips: bool = config.pop("use_clips")  # unused
-        self.min_clips: int = config.pop("min_clips")  # unused
-        self.max_clips: int = config.pop("max_clips")  # unused
-        self.include_background: bool = config.pop("include_background")  # unused
+        
         self.add_stop_frame: int = config.pop("add_stop_frame")
         self.expand_segments: int = config.pop("expand_segments")
         self.frames_noise: float = config.pop("frames_noise")
@@ -131,17 +127,13 @@ class RetrievalDatasetConfig(trainer_configs.BaseDatasetConfig):
         self.preload_text_feat: bool = config.pop("preload_text_feat")
 
         assert self.data_type == ExperimentTypesConst.RETRIEVAL
-        assert isinstance(self.metadata_name, str)
         assert isinstance(self.vid_feat_name, str)
         assert isinstance(self.text_feat_name, str)
-        assert isinstance(self.min_frames, int)
+        
         assert isinstance(self.max_frames, int)
         assert isinstance(self.vid_feat_dim, int)
         assert isinstance(self.text_feat_dim, int)
-        assert isinstance(self.use_clips, bool)
-        assert isinstance(self.min_clips, int)
-        assert isinstance(self.max_clips, int)
-        assert isinstance(self.include_background, bool)
+    
         assert isinstance(self.add_stop_frame, int)
         assert isinstance(self.expand_segments, int)
         assert isinstance(self.frames_noise, (int, float)) and self.frames_noise >= 0
@@ -175,8 +167,12 @@ class CootMetersConst(typext.ConstantHolder):
     """
     TRAIN_LOSS_CC = "train/loss_cc"
     TRAIN_LOSS_CONTRASTIVE = "train/loss_contr"
+    TRAIN_LOSS_ACTION = "train/loss_act"
+    
     VAL_LOSS_CC = "val/loss_cc"
     VAL_LOSS_CONTRASTIVE = "val/loss_contr"
+    VAL_LOSS_ACTION = "val/loss_act"
+    
     # RET_MODALITIES = ["vid2par", "par2vid", "cli2sen", "sen2cli"]
     # RET_MODALITIES_SHORT = ["v2p", "p2v", "c2s", "s2c"]
     RET_MODALITIES = ["vid2par", "par2vid"]

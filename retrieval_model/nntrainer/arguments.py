@@ -4,13 +4,16 @@ Modular arguments for scripts and utilities to parse some of those arguments.
 import argparse
 import logging
 import os
+import os.path as osp
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import repo_config
 from nntrainer.utils import TrainerPathConst
 
+from utils import RESULT_DIR
 
+SAVE_DIR = osp.join(RESULT_DIR, 'retrieval_model')
 GITLIKE_SUPPORT = "Supports .gitignore-like patterns, separated by comma."
 GITLIKE_SUPPORT_FILE = "Supports .gitignore-like patterns, one per line."
 
@@ -123,8 +126,7 @@ def add_path_args(parser: argparse.ArgumentParser, *, dataset_path: bool = True,
         profiling_path: Whether to add profiling path argument.
     """
     parser.add_argument("--config_dir", type=str, default=TrainerPathConst.DIR_CONFIG, help="Folder with config files.")
-    parser.add_argument("--log_dir", type=str, default=TrainerPathConst.DIR_EXPERIMENTS,
-                        help="Folder with experiment results.")
+    parser.add_argument("--log_dir", type=str, default=SAVE_DIR, help="Folder with experiment results.")
     if dataset_path:
         add_dataset_path_arg(parser)
     if profiling_path:
@@ -338,42 +340,24 @@ def update_config_from_args(config: Dict, args: argparse.Namespace, *, verbose: 
 
 
 def update_path_from_args(args: argparse.Namespace) -> Path:
-    """
-    Either set path from args or from default.
-
-    Args:
-        args:
-
-    Returns:
-        Root path to data.
-    """
     path_data = args.data_path if args.data_path is not None else repo_config.DATA_PATH
     return Path(path_data)
 
 
-def setup_experiment_identifier_from_args(args: argparse.Namespace, exp_type: str) -> Tuple[str, str, str]:
+def setup_experiment_identifier_from_args(args: argparse.Namespace) -> Tuple[str, str, str]:
     """
     Determine the experiment identifier (Group, name, config file) either from group and name or from config file path.
 
     Args:
         args: Arguments.
-        exp_type: Experiment type.
 
     Returns:
         Tuple of group, name, config file.
     """
-    if args.config_file is None:
-        # no path to config file given, determine from experiment identifier
-        exp_group = args.exp_group
-        exp_name = args.exp_name
-        config_file = setup_config_file_from_experiment_identifier(
-            exp_type, exp_group, exp_name, config_dir=args.config_dir)
-    else:
-        # path to config file given, determine experiment name from config file name (without file type)
-        exp_group = args.exp_group
-        exp_name = args.config_file.split('/')[-1].split('.')[0]
-        # exp_name = ".".join(str(Path(args.config_file).parts[-1]).split(".")[:-1])
-        config_file = args.config_file
+    # path to config file given, determine experiment name from config file name (without file type)
+    exp_group = args.exp_group
+    exp_name = args.config_file.split('/')[-1].split('.')[0]
+    config_file = args.config_file
         
     print(f"Source config: {config_file}")
     return exp_group, exp_name, config_file

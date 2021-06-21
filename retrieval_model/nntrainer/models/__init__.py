@@ -10,6 +10,7 @@ from nntrainer.models.poolers import PoolerConfig, PoolerConst, make_pooler_modu
 from nntrainer.models.transformer_legacy import (
     TransformerLegacy, TransformerConfig, TransformerTypesConst, TransformerEncoder, TransformerEncoderConfig)
 
+from nntrainer.models.transformer_action import TransformerLegacy as VideoEncoder
 
 __all__ = ["make_activation_module", "ActivationConfig", "ActivationConst", "make_normalization_module",
            "NormalizationConfig", "NormalizationConst", "make_encoder_module", "EncoderConfig", "EncoderConst",

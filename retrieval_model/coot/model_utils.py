@@ -22,6 +22,7 @@ class RetrievalVisualEmbTuple(typext.TypedNamedTuple):
     # vid_emb: th.Tensor
     # clip_emb: th.Tensor
     vid_context: th.Tensor
+    action_pred: th.Tensor
     # clip_emb_reshape: th.Tensor
     # clip_emb_mask: th.Tensor
     # clip_emb_lens: th.Tensor

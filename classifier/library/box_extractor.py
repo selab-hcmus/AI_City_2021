@@ -22,7 +22,7 @@ class BoxClassifier(nn.Module):
             nn.Flatten()
         )
         self.classifier = nn.Sequential(
-            nn.Dropout(0.4),
+            nn.Dropout(0.5),
             nn.Linear(out_channel, cfg['NUM_CLASSES'])
         )
 
@@ -53,7 +53,10 @@ class BoxClassifier(nn.Module):
     def predict(self, images: list):
         list_boxes = [preprocess_input(img) for img in images]
         inp = torch.stack(list_boxes, dim=0).cuda()
-        preds = self.forward(inp).detach().cpu().numpy()
+
+        with torch.no_grad():
+            preds = self.forward(inp).detach().cpu().numpy()
+
         return preds
     pass
 
@@ -66,7 +69,6 @@ class ColorClassifier(BoxClassifier):
         super().__init__(cfg)
 
 def get_state_dict(weight_path):
-
     state_dict = torch.load(weight_path)
     if state_dict.get("feature_extractor.0._fc.weight") is not None:
         state_dict.pop("feature_extractor.0._fc.weight")

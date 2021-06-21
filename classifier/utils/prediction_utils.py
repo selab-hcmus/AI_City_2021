@@ -41,6 +41,18 @@ def filter_track_col_preds(preds, col_thres=0.4, weight=None):
     thres_final_pred = (final_pred >= col_thres).astype(np.int)
     return list_preds.tolist(), final_pred.tolist(), thres_final_pred.tolist()
 
+def split_data(seq, num):
+    avg = len(seq) / float(num)
+    out = []
+    last = 0.0
+    while last < len(seq):
+        out.append(seq[int(last):int(last + avg)])
+        last += avg
+    ans = []
+    for arr in out:
+        ans.append(arr[len(arr)//2])
+    return ans
+
 def get_class_name(pred: list, class_map: dict):
     names = []
     for i, val in enumerate(pred):

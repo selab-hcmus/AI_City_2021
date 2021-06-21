@@ -11,7 +11,7 @@ save_dir = osp.join(RESULT_DIR, 'detector')
 os.makedirs(save_dir, exist_ok=True)
 
 config = {
-    'k': 5, 'delta': 5, 'alpha': 0.15
+    'k': 5, 'delta': 5, 'alpha': 0.08
 }
 
 def main1():

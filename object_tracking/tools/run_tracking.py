@@ -170,11 +170,14 @@ if __name__ == '__main__':
             new_id = test_track_map[raw_id]
             save_path = osp.join(mask_save_dir, f'{new_id}.npy')
 
-            vid_data = test_data[raw_id]
-            vid_attn_mask, is_interpolate = get_attn_mask(
-                vid_data, tracking_config['ATN_MASK']['EXPAND_RATIO'], tracking_config['ATN_MASK']['N_EXPAND']
-            )
-            np.save(save_path, vid_attn_mask)
+            if osp.isfile(save_path):
+                vid_attn_mask = np.load(save_path)
+            else:
+                vid_data = test_data[raw_id]
+                vid_attn_mask, is_interpolate = get_attn_mask(
+                    vid_data, tracking_config['ATN_MASK']['EXPAND_RATIO'], tracking_config['ATN_MASK']['N_EXPAND']
+                )
+                np.save(save_path, vid_attn_mask)
 
         
         # 2. Run Tracking using attention masks

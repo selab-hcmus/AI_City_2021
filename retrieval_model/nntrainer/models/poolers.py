@@ -156,7 +156,7 @@ class GenPool(nn.Module):
     def forward(self, features: torch.FloatTensor, mask: torch.BoolTensor, _lengths: torch.LongTensor):
         """
         Args:
-            features: Input features shape (batch_size, seq_len, feat_dim=
+            features: Input features shape (batch_size, seq_len, feat_dim)
             mask: Input mask shape (batch_size, seq_len)
             _lengths: Input lengths, unused, shape (batch_size)
 

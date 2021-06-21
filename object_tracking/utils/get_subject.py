@@ -73,7 +73,6 @@ def get_top_nearest_tracks(vid_data: VideoResult, label_boxes: list, top_k: int=
 
 # label_dict = json_load(TRAIN_TRACK_ORDER_JSON) # Use to load groundtruth boxes
 # label_dict = json_load(TEST_TRACK_ORDER_JSON) # Use to load groundtruth boxes
-test_track = json_load(TEST_TRACK_JSON)
 def find_subject_track(vid_data, subject_boxes: list):
     top_longest_track_ids = get_top_nearest_tracks(vid_data, subject_boxes, top_k=5)
     score_dict = evaluate(subject_boxes, [vid_data.track_map[i] for i in top_longest_track_ids])
@@ -87,12 +86,14 @@ def find_subject_track(vid_data, subject_boxes: list):
     
     if len(best_tracks) == 0:
         return None, score_dict
+        
     best_tracks = sorted(best_tracks, key = lambda val: val[1], reverse=True) # Sort with iou_avg
     subject_track_id = best_tracks[0][0]
     
     return subject_track_id, score_dict
 
 def main2():
+    test_track = json_load(TEST_TRACK_JSON)
     exp_id = 'test_deepsort_v4-3'
     track_dir = osp.join(SAVE_DIR, exp_id, 'json_full')
     miss_frame_ids = ['417', '168']

@@ -117,7 +117,7 @@ def refine_list_subjects(list_subjects, unique=True, is_subject=True):
 
     if unique:
         new_list = list(set(new_list))
-        
+
         # 3. Handle ambiguous annotations
         # [SUV, bus-truck] = [bus-truck]
         if (is_list_in_list(new_list, ['suv', 'bus-truck'])):

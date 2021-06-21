@@ -42,7 +42,7 @@ class StopDetector(object):
 
     def smooth(self, distances: list):
         N = len(distances)
-        if N < self.delta:
+        if N <= self.delta:
             return distances
 
         res = [0]*N

@@ -2,11 +2,11 @@ import os, time, copy, pickle
 import os.path as osp 
 from tqdm import tqdm
 import numpy as np
+import PIL
 from PIL import Image
 
 import torch
 from torchvision import transforms
-import PIL
 
 from utils import AverageMeter
 

@@ -15,7 +15,7 @@ from nntrainer import models, typext
 
 class RetrievalModelManager(models.BaseModelManager):
     """
-    Interface to create the 4 coot models and do the forward pass.
+    Interface to create the 2 coot models (vid + text) and do the forward pass.
     """
 
     def __init__(self, cfg: RetrievalConfig):
@@ -23,55 +23,27 @@ class RetrievalModelManager(models.BaseModelManager):
         # update config type hints
         self.cfg: RetrievalConfig = self.cfg
 
-        # find out input dimensions to the network
-        input_dims = {
-            RetrievalNetworksConst.NET_VIDEO_LOCAL: cfg.dataset_val.vid_feat_dim,
-            # RetrievalNetworksConst.NET_VIDEO_GLOBAL: cfg.model_cfgs[RetrievalNetworksConst.NET_VIDEO_LOCAL].output_dim,
-            RetrievalNetworksConst.NET_TEXT_LOCAL: cfg.dataset_val.text_feat_dim,
-            # RetrievalNetworksConst.NET_TEXT_GLOBAL: cfg.model_cfgs[RetrievalNetworksConst.NET_TEXT_LOCAL].output_dim,
-        }
 
-        # create the 2 networks
-        for key in RetrievalNetworksConst.values():
-            # load model config
-            current_cfg: models.TransformerConfig = cfg.model_cfgs[key]
-            # create the network
-            if current_cfg.name == models.TransformerTypesConst.TRANSFORMER_LEGACY:
-                self.model_dict[key] = models.TransformerLegacy(current_cfg, input_dims[key])
-            else:
-                raise NotImplementedError(f"Coot model type {current_cfg.name} undefined")
+        self.model_dict[RetrievalNetworksConst.NET_VIDEO_LOCAL] = models.VideoEncoder(
+            cfg.model_cfgs[RetrievalNetworksConst.NET_VIDEO_LOCAL],
+            cfg.dataset_val.vid_feat_dim
+        )
+        self.model_dict[RetrievalNetworksConst.NET_TEXT_LOCAL] = models.TransformerLegacy(
+            cfg.model_cfgs[RetrievalNetworksConst.NET_TEXT_LOCAL],
+            cfg.dataset_val.text_feat_dim
+        )
 
     def encode_visual(self, batch: Batch) -> RetrievalVisualEmbTuple:
-        """
-        Encode visual features to visual embeddings.
-
-        Args:
-            batch: Data batch.
-
-        Returns:
-            Video embeddings tuple.
-        """
         with autocast(enabled=self.is_autocast_enabled()):
             # reference models for easier usage
             net_vid_local = self.model_dict[RetrievalNetworksConst.NET_VIDEO_LOCAL]
             
             # compute video context
-            vid_context, _ = net_vid_local(batch.vid_feat, batch.vid_feat_mask, batch.vid_feat_len, None)
+            vid_context, _, action_pred = net_vid_local(batch.vid_feat, batch.vid_feat_mask, batch.vid_feat_len, None)
 
-            # return RetrievalVisualEmbTuple(vid_emb, clip_emb, vid_context, clip_emb_reshape, clip_emb_mask, clip_emb_lens)
-            return RetrievalVisualEmbTuple(vid_context)
-
+            return RetrievalVisualEmbTuple(vid_context, action_pred)
 
     def encode_text(self, batch: Batch) -> RetrievalTextEmbTuple:
-        """
-        Encode text features to text embeddings.
-
-        Args:
-            batch: Batch data.
-
-        Returns:
-            Text embeddings tuple.
-        """
         with autocast(enabled=self.is_autocast_enabled()):
             # reference models for easier usage
             net_text_local = self.model_dict[RetrievalNetworksConst.NET_TEXT_LOCAL]

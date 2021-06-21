@@ -4,6 +4,8 @@ import pickle
 import cv2
 import math
 
+
+
 class PositionState:
     NO_RELATION = 0
     A_BEHIND_B = 1

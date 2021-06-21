@@ -1,15 +1,16 @@
 from typing import List, Tuple, Union
-from nntrainer import data as nn_data, data_text, maths, typext, utils, utils_torch
 import torch as th
 import json 
+
+from utils.data_manager import TRAIN_TRACK_JSON, TEST_TRACK_JSON, TEST_QUERY_JSON
+from nntrainer import data as nn_data, data_text, maths, typext, utils, utils_torch
+
 
 SPLIT_QUERY_IDS_JSON = './data/aic21/train_test_split_v1.json'
 SPLIT_QUERY_IDS = json.load(open(SPLIT_QUERY_IDS_JSON, 'r'))
 
-TRAIN_TRACK_JSON = '../dataset/data/train-tracks.json'
-TEST_TRACK_JSON = '../dataset/data/test-tracks.json'
 TEST_QUERY_JSON = '../dataset/data/test-queries.json'
-
+ACTION_CLASS = 3
 """
 Assumption:
 - Video contains many clips
@@ -35,6 +36,8 @@ class RetrievalDataPointTuple(typext.TypedNamedTuple):
     
     par_feat: th.Tensor  # shape (num_tokens, text_feat_dim)
     par_feat_len: int
+
+    text_act: th.Tensor
 
     # clip_num: int
     # clip_feat_list: List[th.Tensor]  # shapes (num_feat_clip, vid_feat_dim)
@@ -68,6 +71,7 @@ class RetrievalDataBatchTuple(typext.TypedNamedTuple):
     par_feat_mask: th.Tensor  # shape (batch_size, max_num_tokens) dtype bool
     par_feat_len: th.Tensor  # shape (batch_size) dtype long
     
+    text_act: th.Tensor # shape (batch_size, 3)
     # clip_num: th.Tensor  # shape (batch_size) dtype long
     # clip_feat: th.Tensor  # shapes (total_num_clips, max_num_feat_clip, vid_feat_dim) dtype float
     # clip_feat_mask: th.Tensor  # shapes (total_num_clips, max_num_feat_clip) dtype bool

@@ -8,6 +8,7 @@ from typing import List, Tuple
 
 import h5py
 import numpy as np
+import pickle
 from tqdm import tqdm
 
 from nntrainer.utils_torch import create_shared_array
@@ -24,7 +25,6 @@ class VideoFeatureLoader(object):
         data_keys: List of data keys to load. Important, these are video ids instead of datapoints ids.
         preload_vid_feat: Cache video features to memory.
     """
-
     def __init__(
             self, dataset_path: Path, features_name: str, features_source: str, data_keys: List[str], *,
             preload_vid_feat: bool = False):
@@ -39,23 +39,8 @@ class VideoFeatureLoader(object):
         self.num_frames = {}
         for key, data in tqdm(self.get_features_as_items(load_all=True), desc="Analyzing features"):
             self.num_frames[key] = int(data.shape[0])
-
-        if self.preload_vid_feat:
-            # buffer data to memory
-            for key, data in tqdm(self.get_features_as_items(), desc="Preloading videos", total=len(self.data_keys)):
-                self.cached_data[key] = create_shared_array(data)
-
     
     def get_features_by_key(self, item: str) -> np.ndarray:
-        """
-        Given feature key, load the feature.
-
-        Args:
-            item: Key.
-
-        Returns:
-            Feature data array with shape (num_frames, feature_dim)
-        """
         if self.features_source == "h5":
             # load from h5
             h5 = h5py.File((self.dataset_path / f"{self.features_name}.h5"), "r")
@@ -64,15 +49,6 @@ class VideoFeatureLoader(object):
         raise NotImplementedError(f"Feature source type {self.features_source} not understood.")
 
     def get_features_as_items(self, *, load_all: bool = False):
-        """
-        Iterator for key, value pairs of all features.
-
-        Args:
-            load_all: If true, ignores the provided data keys and loops everything in the path.
-
-        Yields:
-            Tuple of feature key and feature data array with shape (num_frames, feature_dim)
-        """
         if self.features_source == "h5":
             # load from h5
             h5 = h5py.File((self.dataset_path / f"{self.features_name}.h5"), "r")
@@ -86,15 +62,6 @@ class VideoFeatureLoader(object):
             raise NotImplementedError(f"Feature source type {self.features_source} not understood.")
     
     def __getitem__(self, key: str) -> np.ndarray:
-        """
-        Load video features given the data id.
-
-        Args:
-            key: Data id of the video.
-
-        Returns:
-            Video features as numpy array.
-        """
         assert key in self.data_keys, f"Video features for datapoint {key} not found."
         if self.preload_vid_feat:
             # return buffered data
@@ -174,3 +141,14 @@ class TextFeaturesLoader(object):
             old_key = f"v_{key[:11]}"  # backwards compatible loading
             sent_cap_len_list = self.sentence_splits[old_key]
         return text_feats, sent_cap_len_list
+
+
+class TextActionLoader(object):
+    def __init__(self, label_path: str):
+        self.label_map = pickle.load(open(label_path, 'rb'))
+        pass 
+    
+    def __getitem__(self, key: str):
+        return self.label_map[key]
+        
+    pass

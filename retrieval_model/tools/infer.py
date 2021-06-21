@@ -8,9 +8,8 @@ import torch
 from torch.cuda.amp import autocast
 from torch import nn
 
-from retrieval_model.coot import arguments_coot
 from retrieval_model.coot.configs_retrieval import ExperimentTypesConst, RetrievalConfig as Config
-from retrieval_model.coot.aic_dataset import create_retrieval_datasets_and_loaders
+from retrieval_model.coot.aic_dataset import create_retrieval_datasets_and_loaders, RetrievalDataset
 from retrieval_model.coot.test_dataset import VideoDataset, TextDataset
 from retrieval_model.coot.model_retrieval import RetrievalModelManager as ModelManager
 from retrieval_model.coot.trainer_retrieval import RetrievalTrainer as Trainer
@@ -31,7 +30,7 @@ def setup_config():
     arguments.add_exp_identifier_args(parser)  # arguments to identify the experiment to run
     arguments.add_trainer_args(parser)  # general trainer arguments
     arguments.add_dataset_test_arg(parser)  # flag for dataset testing
-    arguments_coot.add_dataloader_args(parser)  # feature preloading
+
     parser.add_argument("--load_model", type=str, default=None, help="Load model from file.")
     parser.add_argument("--save_embeddings", action="store_true", help="Save generated COOT embeddings.")
     parser.add_argument("--save_name", type=str, default='default_submission', help="Load model from file.")
@@ -49,7 +48,6 @@ def setup_config():
     # update experiment config and dataset path given the script arguments
     path_data = arguments.update_path_from_args(args)
     config = arguments.update_config_from_args(config, args)
-    config = arguments_coot.update_coot_config_from_args(config, args)
 
     # read experiment config dict
     cfg = Config(config, is_train=not args.validate and not args.test_dataset)

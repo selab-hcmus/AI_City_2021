@@ -12,7 +12,7 @@ class BceDiceLoss(nn.Module):
         batch_size = inp.shape[0]
         inp = inp.view(batch_size, -1)
         target = target.view(batch_size, -1)
-        bce_loss = nn.BCELoss(reduction='none')(inp, target).mean(dim=-1).double() #[B]
+        bce_loss = nn.BCEWithLogitsLoss(reduction='mean')(inp, target).double() #[B]
         dice_coef = (2.0*(inp*target).sum(dim=-1).double() + 1)/(
             inp.sum(dim=-1).double() + target.sum(dim=-1).double() + 1
         )

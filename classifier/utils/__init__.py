@@ -6,5 +6,5 @@ from .classifier_utils import (
 )
 from .config import *
 from .prediction_utils import (
-    filter_track_veh_preds, filter_track_col_preds, get_class_name
+    filter_track_veh_preds, filter_track_col_preds, get_class_name, split_data
 )

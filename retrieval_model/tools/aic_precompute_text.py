@@ -5,11 +5,9 @@ import shutil
 import time
 from copy import deepcopy
 from itertools import permutations 
-
 from timeit import default_timer as timer
 from typing import Callable, Dict, List
 
-sys.path.append(os.getcwd())
 
 import h5py
 import numpy as np
@@ -19,44 +17,33 @@ from torch.utils import data
 from tqdm import tqdm
 from transformers import AutoModel, AutoTokenizer, BertModel, BertTokenizer
 
-import nntrainer.data_text
-from nntrainer import arguments, maths, utils
-from nntrainer.data_text import get_text_preprocessor
-from nntrainer.typext import ConstantHolder, TypedNamedTuple
+from retrieval_model import nntrainer
+import retrieval_model.nntrainer.data_text
+from retrieval_model.nntrainer import arguments, maths, utils
+from retrieval_model.nntrainer.data_text import get_text_preprocessor
+from retrieval_model.nntrainer.typext import ConstantHolder
 
+from retrieval_model.coot.text_dataset import TextConverterDataset
 
-from coot.dataset_utils import (
-    TRAIN_TRACK_JSON, TEST_TRACK_JSON, TEST_QUERY_JSON
+from retrieval_model.utils.text_utils import (
+    init_embedding_module, get_preprocessor, get_text_dict
 )
 
-class TextModelConst(ConstantHolder):
-    """
-    Identifier for text models, the model name starts with the identifier.
-    """
-    BERT = "bert"
-    GPT2 = "gpt2"
-    ROBERTA = "roberta"
-    DISTILBERT = "distilbert"
+
 
 def get_parser():
     parser = utils.ArgParser()
     parser.add_argument("--dataset_name", type=str, default='TRAIN', help="dataset name")
     arguments.add_dataset_path_arg(parser)
     arguments.add_test_arg(parser)
-    parser.add_argument("--metadata_name", type=str, default="all", help="change which metadata to load")
     parser.add_argument("--cuda", action="store_true", help="use cuda")
-    parser.add_argument("--multi_gpu", action="store_true", help="use multiple gpus")
-    parser.add_argument("--model_path", type=str, default=None,
-                        help="Cache path for transformers package.")
-    parser.add_argument("--model_name", type=str, default="bert-base-uncased", help="Which model to use.")
-    parser.add_argument("--model_source", type=str, default="transformers", help="Where to get the models from.")
+    parser.add_argument("--model_path", type=str, default=None, help="Cache path for transformers package.")
     parser.add_argument("--layers", type=str, default="-2,-1",
                         help="Read the features from these layers. Careful: Multiple layers must be specified like "
                              "this: --layers=-2,-1 because of argparse handling minus as new argument.")
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size.")
     parser.add_argument("--workers", type=int, default=0, help="Dataloader workers.")
     parser.add_argument("--add_name", type=str, default="", help="Add additional identifier to output files.")
-    parser.add_argument("-f", "--force", action="store_true", help="Overwrite embedding if exists.")
     parser.add_argument("--encoder_only", action="store_true",
                         help="Flag for hybrid models (BART: bilinear and unilinear) that return "
                              "both encoder and decoder output, if the decoder output should be discarded.")
@@ -73,73 +60,6 @@ def get_parser():
 
     args = parser.parse_args()
     return args
-
-def init_embedding_module(args):
-    # Load pretrained model
-    model_name = args.model_name
-    print("*" * 20, f"Loading model {model_name} from {args.model_source}")
-    if args.model_source == "transformers":
-        tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=args.model_path)
-        model: BertModel = AutoModel.from_pretrained(model_name, cache_dir=args.model_path)
-        if args.print_model:
-            print("*" * 40, "Model")
-            print(f"{model}")
-            print("*" * 40, "Config")
-            print(model.config)
-        # noinspection PyUnresolvedReferences
-        max_text_len = model.config.max_position_embeddings
-        model.eval()
-    else:
-        raise NotImplementedError(f"Model source unknown: {args.model_source}")
-    if args.cuda:
-        model = model.cuda()
-
-    print(f"Running model on device {next(model.parameters()).device}")
-    print(f"Maximum input length {max_text_len}")
-
-    return model, tokenizer
-
-def get_preprocessor(args):
-    model_name = args.model_name
-    preprocessor = None
-    if args.set_tokenizer != "":
-        print(f"Set tokenizer via flag to {args.set_tokenizer}")
-        preprocessor = get_text_preprocessor(args.set_tokenizer)
-    elif model_name == "bert-base-uncased":
-        # paper results
-        preprocessor = get_text_preprocessor(nntrainer.data_text.TextPreprocessing.BERT_PAPER)
-    elif model_name.startswith(TextModelConst.BERT) or model_name.startswith(TextModelConst.DISTILBERT):
-        # new results bert-large-cased
-        preprocessor = get_text_preprocessor(nntrainer.data_text.TextPreprocessing.BERT_NEW)
-    elif model_name.startswith(TextModelConst.GPT2):
-        # new results with gpt2
-        preprocessor = get_text_preprocessor(nntrainer.data_text.TextPreprocessing.GPT2)
-    else:
-        print(f"WARNING: no text preprocessing defined for model {model_name}, using default preprocessing which "
-              f"does not add any special tokens.")
-        preprocessor = get_text_preprocessor(nntrainer.data_text.TextPreprocessing.SIMPLE)
-
-    return preprocessor
-
-def refine_text_dict(text_dict):
-    return text_dict
-    
-def get_text_dict(args):
-    text_dict = {} # {'query_id': [cap1, cap2, cap3]}
-    if args.dataset_name == 'TEST':
-        meta_json = TEST_QUERY_JSON
-        test_queries = json.load(open(meta_json))
-        for q_id in test_queries:
-            text_dict[q_id] = test_queries[q_id]    
-    else:
-        meta_json = TRAIN_TRACK_JSON
-
-        train_track = json.load(open(meta_json))
-        for q_id in train_track:
-            text_dict[q_id] = train_track[q_id]['nl']
-
-    text_dict = refine_text_dict(text_dict)
-    return text_dict
 
 def test_preprocess_text(text_dict, preprocessor):
     sample_id = list(text_dict.keys())[0]
@@ -159,29 +79,28 @@ def test_embedding_feature(text_dict, data_npy, length):
     print(length[sample_id])
     print(f'Embeding feature: {data_npy[sample_id].shape}')
     pass
-    
+
 @th.no_grad()
 def main():
     args = get_parser()
 
     data_path = arguments.update_path_from_args(args)
-    dataset_path = data_path / 'aic21'
+    dataset_path = data_path #/ 'aic21'
     model_name = args.model_name
     token_stride = args.token_stride
-    model_ident = f"{args.model_source}_{model_name.replace('/', '--')}_{args.layers}"
-    full_ident = f"text_feat_{args.dataset_name}_meta_{args.metadata_name}_{model_ident}{args.add_name}"
-
+    save_name = f"{args.dataset_name}_text_feat"
     # setup paths
     text_features_path = dataset_path
     os.makedirs(text_features_path, exist_ok=True)
-    lengths_file = text_features_path / f"{full_ident}_sentence_splits.json"
-    data_file_only = f"{full_ident}.h5"
+    lengths_file = text_features_path / f"{save_name}_sentence_splits.json"
+    data_file_only = f"{save_name}.h5"
     data_file = text_features_path / data_file_only
 
-    if data_file.exists() and lengths_file.exists() and not args.force:
+    if data_file.exists() and lengths_file.exists():
         print(f"{data_file} already exists. nothing to do.")
         return
 
+    # Init model
     model, tokenizer = init_embedding_module(args)
     max_text_len = model.config.max_position_embeddings
     print('Init model successfully')
@@ -219,7 +138,6 @@ def main():
     # print first datapoint
     for key, value in dataset[0].items():
         print(f"{key}: {value}\n")
-
 
     # loop videos and encode features
     print("*" * 20, "Running the encoding.")
@@ -333,172 +251,5 @@ def main():
     print(f"Total feature dim of {len(layer_list_int)} is {total_feat_dim}")
 
 
-# ---------- Text Dataset ----------
-
-class TextDataPointTuple(TypedNamedTuple):
-    """
-    Definition of a single hierarchical text datapoint.
-    """
-    key: str
-    text: List[str]
-    text_tokenized: List[List[str]]
-    tokens: th.Tensor  # shape: (num_tokens)
-    sentence_lengths: List[int]
-
-class TextDataBatchPoint(TypedNamedTuple):
-    """
-    Definition of a hierarchical text batch.
-    """
-    key: List[str]
-    tokens: th.Tensor  # shape: (batch_size, max_num_tokens)
-    mask: th.BoolTensor  # shape: (batch_size, max_num_tokens)
-    lengths: th.Tensor  # shape: (batch_size)
-    sentence_lengths: List[List[int]]
-
-class TextConverterDataset(data.Dataset):
-    """
-    Dataset used for text input to generate features with language models.
-
-    Args:
-        tokenizer: String to int tokenizer.
-        text_dict: Input text dict, each value is a list of sentences.
-        preprocessor: Preprocessing function for the text.
-        max_text_len: Maximum input length for the model.
-        min_cut: Minimum sentence length to retain when cutting input.
-        add_special_tokens: Let the tokenizer add special tokens like [CLS].
-            Only set True if the preprocessor doesn't do that already.
-    """
-
-    def __init__(self, tokenizer: BertTokenizer, text_dict: Dict[str, List[str]],
-                 preprocessor: Callable[[List[str]], List[List[str]]], *, max_text_len: int = 512, min_cut: int = 5,
-                 token_stride: bool = False,
-                 add_special_tokens: bool = False):
-        self.token_stride = token_stride
-        self.tokenizer = tokenizer
-        self.text_dict = text_dict
-        self.preprocessor = preprocessor
-        self.max_text_len = max_text_len
-        self.min_cut = min_cut
-        self.keys = list(text_dict.keys())
-        self.add_special_tokens = add_special_tokens
-
-    def __len__(self) -> int:
-        """
-        Dataset size.
-
-        Returns:
-            Number of datapoints.
-        """
-        return len(self.keys)
-
-    def __getitem__(self, item: int) -> TextDataPointTuple:
-        """
-        Return single paragraph datapoint.
-
-        Args:
-            item: Datapoint number.
-
-        Returns:
-            Single datapoint.
-        """
-        key: str = self.keys[item]
-        text: List[str] = self.text_dict[key]
-
-        # process paragraph text
-        processed_text: List[str] = self.preprocessor(text)
-
-        # tokenize with the model's tokenizer
-        total_len: int = 0
-        par_tokens: List[List[int]] = []
-        par_tokens_str: List[int] = []
-
-        for sentence in processed_text:
-            sentence_tokens_str = self.tokenizer.tokenize(sentence, add_special_tokens=self.add_special_tokens)
-            sentence_tokens = self.tokenizer.convert_tokens_to_ids(sentence_tokens_str)
-            total_len += len(sentence_tokens)
-            par_tokens.append(sentence_tokens)
-            par_tokens_str.append(sentence_tokens_str)
-
-        # check max length is fulfilled only if token_stride is disabled
-        if sum(len(sentence_tokens) for sentence_tokens in par_tokens) > self.max_text_len and not self.token_stride:
-            # automatically cut too long tokens if needed
-            original_sentence_lengths = [len(sentence) for sentence in par_tokens]
-            new_sentence_lengths = deepcopy(original_sentence_lengths)
-
-            # go through sentences backwards and calculate new lengths
-            for sent in reversed(range(len(new_sentence_lengths))):
-                # calculate how much there is still left to cut
-                overshoot = sum(new_sentence_lengths) - 512
-                if overshoot <= 0:
-                    break
-
-                # don't cut more than min_cut
-                new_len = max(self.min_cut, len(par_tokens[sent]) - overshoot)
-                new_sentence_lengths[sent] = new_len
-
-            # given the calculated new lengths, iterate sentences and make them shorter
-            par_tokens_new = []
-            for i, (old_len, new_len) in enumerate(zip(original_sentence_lengths, new_sentence_lengths)):
-                if old_len == new_len:
-                    # nothing changed, retain old sentence
-                    par_tokens_new.append(par_tokens[i])
-                    continue
-
-                # cut the sentence to new length L, keep first L-1 and the last EOS token.
-                par_tokens_new.append(par_tokens[i][:new_len - 1] + [par_tokens[i][-1]])
-
-            # done, replace tokens
-            par_tokens = par_tokens_new
-            print(f"\nKey: {key}, Cut input {sum(original_sentence_lengths)} to {self.max_text_len}, new length: "
-                  f"{sum(len(sentence) for sentence in par_tokens)}")
-
-        # calculate sentence lengths, these are needed to get the features back per sentence
-        sentence_lengths = [len(sentence) for sentence in par_tokens]
-
-        # input an entire flat paragraph into the model to make use of context
-        flat_tokens = th.Tensor([word for sentence in par_tokens for word in sentence]).long()
-        return TextDataPointTuple(key, processed_text, par_tokens_str, flat_tokens, sentence_lengths)
-
-    def collate_fn(self, batch: List[TextDataPointTuple]):
-        """
-        Collate a list of datapoints, merge tokens into a single tensor and create attention masks.
-
-        Args:
-            batch: List of single datapoints.
-
-        Returns:
-            Collated batch.
-        """
-        batch_size = len(batch)
-
-        # get tokens and calculate their length
-        list_tokens = [b.tokens for b in batch]
-        list_lengths = [len(token) for token in list_tokens]
-        lengths = th.Tensor(list_lengths).long()
-
-        # initialize batch tensors to the max sequence length
-        max_len = max(list_lengths)
-        tokens = th.zeros(batch_size, max_len).long()
-        mask = th.zeros(batch_size, max_len).bool()
-
-        # given lengths and content, fill the batch tensors
-        for batch_num, (seq_len, item) in enumerate(zip(list_lengths, list_tokens)):
-            tokens[batch_num, :seq_len] = item
-            mask[batch_num, :seq_len] = 1
-
-        # add some more required information to the batch
-        key = [b.key for b in batch]
-        sentence_lengths = [b.sentence_lengths for b in batch]
-        return TextDataBatchPoint(key, tokens, mask, lengths, sentence_lengths)
-
-
 if __name__ == "__main__":
-    # NUM_CAPS_PER_QUERY = 3 
-    # valid_ids = list(range(3))
-    # aug_ids = permutations(valid_ids)
-
-    # for i, aug_id in enumerate(aug_ids):
-    #     pass
-
-
     main()

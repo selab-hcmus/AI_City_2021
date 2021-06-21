@@ -104,6 +104,40 @@ class ContrastiveLoss(nn.Module):
         return (cost_s.sum() + cost_im.sum())#/(im.shape[0])
 
 
+class BceDiceLoss(nn.Module):
+    def __init__(self, weight_bce: float=0.0, weight_dice: float=1.0):
+        super().__init__()
+        self.weight_bce = weight_bce
+        self.weight_dice = weight_dice
+        pass 
+    
+    def forward(self, inp, target):
+        batch_size = inp.shape[0]
+        inp = inp.view(batch_size, -1)
+        target = target.view(batch_size, -1)
+        # bce_loss = nn.BCEWithLogitsLoss(reduction='none')(inp, target).mean(dim=-1).double() #[B]
+        dice_coef = (2.0*(inp*target).sum(dim=-1).double() + 1)/(
+            inp.sum(dim=-1).double() + target.sum(dim=-1).double() + 1
+        )
+        dice_loss = 1-dice_coef
+        # total_loss = th.mean(self.weight_bce*bce_loss + self.weight_dice*dice_loss)
+        total_loss = th.mean(self.weight_dice*dice_loss)
+
+        return total_loss
+    pass
+
+
+def iou_dice_score(pred, target):
+    batch_size = pred.shape[0]
+    inp = pred.view(batch_size, -1)
+    target = target.view(batch_size, -1)
+    inter = (inp*target).sum(dim=-1)
+    union = (inp+target).sum(dim=-1) - inter 
+    iou = (inter + 1)/(union + 1)
+    dice = (2*inter + 1)/(union + inter + 1)
+
+    return th.mean(iou), th.mean(dice)
+
 def compute_mean_distance_l2(c, s):
     return th.mean((c - s) ** 2, dim=-1)
 

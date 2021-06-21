@@ -1,2 +1,3 @@
-python tools/train.py \ 
--c ./config/retrieval/paper2020/aic_res152_coot_6148_feats.yaml 
+python tools/train_action.py \ 
+-c 'config/aic21_6148_atn1.yaml' \
+--data_path 'data/aic21'

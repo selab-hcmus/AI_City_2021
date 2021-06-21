@@ -18,7 +18,7 @@ from coot import model_retrieval
 from coot.configs_retrieval import (
     CootMetersConst as CMeters, ExperimentTypesConst, RetrievalConfig, RetrievalTrainerState)
 from coot.aic_dataset import RetrievalDataBatchTuple
-from coot.loss_fn import ContrastiveLoss, LossesConst
+from coot.loss_fn import ContrastiveLoss, LossesConst, BceDiceLoss, iou_dice_score
 from nntrainer import lr_scheduler, optimization, retrieval, trainer_base
 
 
@@ -51,13 +51,14 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         if self.cfg.use_cuda:
             self.loss_contr = self.loss_contr.cuda()
 
+        self.loss_action = BceDiceLoss() # Default: weight_bce = 0, weight_dice = 1
         # ---------- additional metrics ----------
 
         # loss proportions
-        # self.metrics.add_meter(CMeters.VAL_LOSS_CC, use_avg=False)
         self.metrics.add_meter(CMeters.VAL_LOSS_CONTRASTIVE, use_avg=False)
-        # self.metrics.add_meter(CMeters.TRAIN_LOSS_CC, per_step=True, use_avg=False)
+        self.metrics.add_meter(CMeters.VAL_LOSS_ACTION, use_avg=False)
         self.metrics.add_meter(CMeters.TRAIN_LOSS_CONTRASTIVE, per_step=True, use_avg=False)
+        self.metrics.add_meter(CMeters.TRAIN_LOSS_ACTION, per_step=True, use_avg=False)
 
         # retrieval validation metrics must be constructed as product of two lists
         for modality in CMeters.RET_MODALITIES:
@@ -90,7 +91,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         self.hook_post_init()
 
         # PHAT attributes
-        self.best_mrr = 0.0
+        self.best_meanr = 100.0
         self.best_p2v_r1 = 0.0
 
 
@@ -100,10 +101,10 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
 
     def compute_cluster_loss(self, visual_emb: th.Tensor, text_emb: th.Tensor) -> th.Tensor:
         return (self.loss_contr(visual_emb, visual_emb))
-        # return (self.loss_contr(visual_emb, visual_emb) + self.loss_contr(text_emb, text_emb)) / 2
 
     def compute_total_constrastive_loss(self, visual_data: model_retrieval.RetrievalVisualEmbTuple,
                                         text_data: model_retrieval.RetrievalTextEmbTuple) -> th.Tensor:
+        
         # normalize embeddings with L2-Normalization
         vid_context_norm = F.normalize(visual_data.vid_context)
         par_context_norm = F.normalize(text_data.par_context)
@@ -128,8 +129,6 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         par_context_norm = F.normalize(text_data.par_context)
         
         loss = self.loss_contr(visual_data.vid_context, text_data.par_context)
-        # self.loss_contr(visual_data.vid_emb, text_data.par_emb),
-        # self.loss_contr(visual_data.clip_emb, text_data.sent_emb))
         cluster_loss = self.compute_cluster_loss(vid_context_norm, par_context_norm)
         self.logger.info(f"{self.state.total_step}: " + ("{:.3f} " * 2).format(loss, cluster_loss))
         return loss + cluster_loss
@@ -178,13 +177,15 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
                 # ---------- forward pass ----------
                 with autocast(enabled=self.cfg.fp16_train):
                     visual_data = self.model_mgr.encode_visual(batch)
+                    action_pred = visual_data.action_pred
                     text_data = self.model_mgr.encode_text(batch)
 
                     if self.cfg.train.loss_func == LossesConst.CONTRASTIVE:
                         contr_loss = self.compute_total_constrastive_loss(visual_data, text_data)
-                    # elif self.cfg.train.loss_func == LossesConst.CROSSENTROPY:
-                    #     contr_loss = self.compute_total_ce_loss(visual_data, text_data)
-                    loss = contr_loss
+
+                    act_loss = self.loss_action(action_pred, batch.text_act)
+
+                    loss = self.cfg.train.weight_action*act_loss + self.cfg.train.weight_ret*contr_loss
 
                 self.hook_post_forward_step_timer()  # hook for step timing
 
@@ -199,7 +200,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
                     loss.backward()
                     self.optimizer.step()
 
-                additional_log = f"Loss Contrast: {contr_loss:.5f}"
+                additional_log = f"Loss Contrast: {contr_loss:.5f}, Loss Action: {act_loss:.5f}"
                 self.hook_post_backward_step_timer()  # hook for step timing
 
                 # post-step hook: gradient clipping, profile gpu, update metrics, count step, step LR scheduler, log
@@ -235,6 +236,7 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         forward_time_total = 0
         loss_total: th.Tensor = 0.
         contr_loss_total: th.Tensor = 0.
+        act_loss_total: th.Tensor = 0.
         data_collector = {}
 
         # decide what to collect
@@ -260,13 +262,18 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
 
             with autocast(enabled=self.cfg.fp16_val):
                 visual_data = self.model_mgr.encode_visual(batch)
+                action_pred = visual_data.action_pred
                 text_data = self.model_mgr.encode_text(batch)
                 if self.cfg.train.loss_func == LossesConst.CONTRASTIVE:
                     contr_loss = self.compute_total_constrastive_loss(visual_data, text_data)
-                elif self.cfg.train.loss_func == LossesConst.CROSSENTROPY:
-                    contr_loss = self.compute_total_ce_loss(visual_data, text_data)
+
+                act_loss = self.loss_action(action_pred, batch.text_act)
+                
+                act_loss_total += act_loss
                 contr_loss_total += contr_loss
-                loss_total += contr_loss
+                
+                loss = self.cfg.train.weight_action*act_loss + self.cfg.train.weight_ret*contr_loss
+                loss_total += loss
 
             self.hook_post_forward_step_timer()
             forward_time_total += self.timedelta_step_forward
@@ -297,8 +304,10 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         # calculate total loss and feed meters
         loss_total /= num_steps
         contr_loss_total /= num_steps
+        act_loss_total /= num_steps
         forward_time_total /= num_steps
         self.metrics.update_meter(CMeters.VAL_LOSS_CONTRASTIVE, contr_loss_total)
+        self.metrics.update_meter(CMeters.VAL_LOSS_ACTION, act_loss_total)
 
         # calculate video-paragraph retrieval and print output table
         self.logger.info(retrieval.VALHEADER)
@@ -323,17 +332,17 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
 
         # print some more details about the retrieval (time, number of datapoints)
         self.logger.info(
-            f"Loss {loss_total:.5f} (Contr: {contr_loss_total:.5f}"
+            f"Loss {loss_total:.5f} (Contr: {contr_loss_total:.5f}, Action: {act_loss_total:.5f}, "
             f"Retrieval: {str_vp}{str_cs}total {timer() - self.timer_val_epoch:.3f}s, "
             f"forward {forward_time_total:.3f}s")
 
         # find field which determines whether this is a new best epoch
         val_score = sum_vp_at_1
         
-        if res_p2v['mrr'] > self.best_mrr:
-            print(f"[PHAT] Achieve best MRR, before: {self.best_mrr:.04f}, after: {res_p2v['mrr']:.04f}")
-            self.phat_save_model('mrr')
-            self.best_mrr = res_p2v['mrr']
+        if res_p2v['meanr'] < self.best_meanr:
+            print(f"[PHAT] Achieve best MeanR, before: {self.best_meanr:.04f}, after: {res_p2v['meanr']:.04f}")
+            self.phat_save_model('meanR')
+            self.best_meanr = res_p2v['meanr']
 
         if res_p2v['r1'] > self.best_p2v_r1:
             print(f"[PHAT] Achieve best p2v R@1, before: {self.best_p2v_r1:.04f}, after: {res_p2v['r1']:.04f}")
@@ -348,23 +357,11 @@ class RetrievalTrainer(trainer_base.BaseTrainer):
         return loss_total, val_score, is_best, ((res_v2p, res_p2v, sum_vp_at_1), clipsent_results)
 
     def get_opt_state(self) -> Dict[str, Dict[str, nn.Parameter]]:
-        """
-        Return the current optimizer and scheduler state.
-
-        Returns:
-            Dictionary of optimizer and scheduler state dict.
-        """
         return {
             "optimizer": self.optimizer.state_dict(),
             "lr_scheduler": self.lr_scheduler.state_dict()
         }
 
     def set_opt_state(self, opt_state: Dict[str, Dict[str, nn.Parameter]]) -> None:
-        """
-        Set the current optimizer and scheduler state from the given state.
-
-        Args:
-            opt_state: Dictionary of optimizer and scheduler state dict.
-        """
         self.optimizer.load_state_dict(opt_state["optimizer"])
         self.lr_scheduler.load_state_dict(opt_state["lr_scheduler"])
