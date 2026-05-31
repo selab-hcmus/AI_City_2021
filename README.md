@@ -33,7 +33,16 @@ The Classifier is modified from the well-organized repo [EfficientNet PyTorch](h
 The toolkit used for SRL Extraction step is taken from the [AllenNLP library](https://github.com/allenai/allennlp).
 
 ## Citations
-Please consider citing this project in your publications if it helps your research: *Uploading*
+Please consider citing this project in your publications if it helps your research:
+```bibtex
+@inproceedings{nguyen2021traffic,
+  title={Traffic video event retrieval via text query using vehicle appearance and motion attributes},
+  author={Nguyen, Tien-Phat and Tran-Le, Ba-Thinh and Thai, Xuan-Dang and Nguyen, Tam V and Do, Minh N and Tran, Minh-Triet},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={4165--4172},
+  year={2021}
+}
+```
 
 ------------------
 The code is used for academic purpose only.
